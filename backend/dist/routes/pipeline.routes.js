@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const pipeline_controller_1 = require("../controllers/pipeline.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get('/', pipeline_controller_1.getPipelines);
+router.post('/', pipeline_controller_1.createPipeline);
+router.get('/:id/leads', pipeline_controller_1.getPipelineLeads);
+router.post('/move', pipeline_controller_1.moveLead);
+exports.default = router;

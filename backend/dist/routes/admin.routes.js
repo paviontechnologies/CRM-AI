@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const admin_controller_1 = require("../controllers/admin.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate, (0, auth_middleware_1.requireRole)(['SUPERADMIN']));
+router.get('/orgs', admin_controller_1.getAllOrgs);
+router.get('/users', admin_controller_1.getAllUsers);
+router.get('/stats', admin_controller_1.getSystemStats);
+router.get('/templates', admin_controller_1.getNicheTemplates);
+router.post('/templates', admin_controller_1.createNicheTemplate);
+router.put('/templates/:id', admin_controller_1.updateNicheTemplate);
+router.delete('/templates/:id', admin_controller_1.deleteNicheTemplate);
+router.post('/features', admin_controller_1.toggleFeature);
+exports.default = router;

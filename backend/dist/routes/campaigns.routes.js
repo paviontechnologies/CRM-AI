@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const campaigns_controller_1 = require("../controllers/campaigns.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get('/', campaigns_controller_1.getCampaigns);
+router.get('/:id', campaigns_controller_1.getCampaign);
+router.post('/', campaigns_controller_1.createCampaign);
+router.put('/:id', campaigns_controller_1.updateCampaign);
+router.delete('/:id', campaigns_controller_1.deleteCampaign);
+router.post('/:id/steps', campaigns_controller_1.addStep);
+router.post('/:id/enroll', campaigns_controller_1.enrollLeads);
+router.get('/:id/analytics', campaigns_controller_1.getCampaignAnalytics);
+exports.default = router;
