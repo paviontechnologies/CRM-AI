@@ -12,6 +12,8 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
+  Play,
+  Pause,
 } from 'lucide-react';
 import api from '@/lib/api';
 
@@ -252,6 +254,21 @@ function CampaignCard({
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [enrollLoading, setEnrollLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  // Only 'active' campaigns are picked up by the backend scheduler.
+  const handleToggleStatus = async () => {
+    const next = campaign.status === 'active' ? 'paused' : 'active';
+    setStatusLoading(true);
+    try {
+      await api.patch(`/campaigns/${campaign.id}/status`, { status: next });
+      onRefresh();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Could not change the campaign status');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   const loadDetail = async () => {
     if (expanded) { setExpanded(false); return; }
@@ -312,6 +329,29 @@ function CampaignCard({
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handleToggleStatus}
+              disabled={statusLoading}
+              title={
+                campaign.status === 'active'
+                  ? 'Pause — stops the scheduler from sending further steps'
+                  : 'Activate — the scheduler starts sending enrolled leads'
+              }
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-60 ${
+                campaign.status === 'active'
+                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-700'
+                  : 'bg-green-50 hover:bg-green-100 text-green-700'
+              }`}
+            >
+              {statusLoading ? (
+                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : campaign.status === 'active' ? (
+                <Pause className="w-3.5 h-3.5" />
+              ) : (
+                <Play className="w-3.5 h-3.5" />
+              )}
+              {campaign.status === 'active' ? 'Pause' : 'Activate'}
+            </button>
             <button
               onClick={loadDetail}
               className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-xl text-xs font-medium transition-colors"

@@ -1,6 +1,16 @@
 import { Response } from 'express';
+import Stripe from 'stripe';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
+
+let stripeClient: Stripe | null = null;
+
+/** Lazily construct the Stripe client so the app boots fine without billing configured. */
+const getStripe = (): Stripe | null => {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  if (!stripeClient) stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+  return stripeClient;
+};
 
 const PLANS = [
   {
@@ -114,11 +124,12 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
     const { plan } = req.body;
 
     const planData = PLANS.find((p) => p.id === plan);
-    if (!planData || planData.price === 0) {
+    if (!planData || planData.price === 0 || !planData.priceId) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    const stripe = getStripe();
+    if (!stripe) {
       // Mock checkout response for development
       return res.status(200).json({
         sessionId: `mock_session_${Date.now()}`,
@@ -129,8 +140,6 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
       });
     }
 
-    // Real Stripe integration
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const org = await prisma.organization.findUnique({ where: { id: orgId } });
 
     let customerId = org?.stripeCustomerId;
@@ -160,39 +169,47 @@ export const createCheckoutSession = async (req: AuthRequest, res: Response) => 
 export const handleWebhook = async (req: AuthRequest, res: Response) => {
   try {
     const sig = req.headers['stripe-signature'];
-    if (!process.env.STRIPE_SECRET_KEY || !sig) {
+    const stripe = getStripe();
+    if (!stripe || !sig || !process.env.STRIPE_WEBHOOK_SECRET) {
       return res.status(400).json({ error: 'Stripe not configured' });
     }
 
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    let event: any;
+    // Set by the express.json verify hook in index.ts — the parsed body would fail
+    // signature verification because it is no longer byte-identical.
+    const rawBody = (req as any).rawBody;
+    if (!rawBody) {
+      console.error('Stripe webhook: raw body missing');
+      return res.status(400).json({ error: 'Webhook signature verification failed' });
+    }
 
+    let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch {
       return res.status(400).json({ error: 'Webhook signature verification failed' });
     }
 
-    const session = event.data.object;
-
     switch (event.type) {
       case 'checkout.session.completed': {
+        const session = event.data.object;
         const orgId = session.metadata?.orgId;
         const plan = session.metadata?.plan;
-        if (orgId && plan) {
+        const subId = typeof session.subscription === 'string' ? session.subscription : null;
+
+        if (orgId && plan && subId) {
           const planData = PLANS.find((p) => p.id === plan);
           await prisma.subscription.upsert({
-            where: { stripeSubId: session.subscription },
+            where: { stripeSubId: subId },
             create: {
               organizationId: orgId,
-              stripeSubId: session.subscription,
+              stripeSubId: subId,
               plan,
               status: 'active',
-              leadLimit: planData?.leadLimit || 100,
-              aiLimit: planData?.aiLimit || 50,
-              emailLimit: planData?.emailLimit || 500,
-              waLimit: planData?.waLimit || 100,
-              seatLimit: planData?.seatLimit || 2
+              leadLimit: planData?.leadLimit ?? 100,
+              aiLimit: planData?.aiLimit ?? 50,
+              emailLimit: planData?.emailLimit ?? 500,
+              waLimit: planData?.waLimit ?? 100,
+              seatLimit: planData?.seatLimit ?? 2
             },
             update: { plan, status: 'active' }
           });
@@ -203,11 +220,34 @@ export const handleWebhook = async (req: AuthRequest, res: Response) => {
         }
         break;
       }
-      case 'customer.subscription.deleted': {
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
         await prisma.subscription.updateMany({
-          where: { stripeSubId: session.id },
+          where: { stripeSubId: sub.id },
+          data: {
+            status: sub.status,
+            cancelAtPeriodEnd: sub.cancel_at_period_end,
+            ...(sub.items.data[0]?.current_period_end && {
+              currentPeriodEnd: new Date(sub.items.data[0].current_period_end * 1000)
+            })
+          }
+        });
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        await prisma.subscription.updateMany({
+          where: { stripeSubId: sub.id },
           data: { status: 'canceled' }
         });
+        // Drop the org back to free so limits reapply immediately.
+        const record = await prisma.subscription.findUnique({ where: { stripeSubId: sub.id } });
+        if (record) {
+          await prisma.organization.update({
+            where: { id: record.organizationId },
+            data: { subscription: 'free' }
+          });
+        }
         break;
       }
     }

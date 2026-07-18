@@ -121,7 +121,7 @@ export default function BillingPage() {
     setError('');
     setSuccess('');
     try {
-      const res = await api.post('/billing/checkout', { planId });
+      const res = await api.post('/billing/checkout', { plan: planId });
       if (res.data?.url) {
         window.open(res.data.url, '_blank');
       } else if (res.data?.checkoutUrl) {

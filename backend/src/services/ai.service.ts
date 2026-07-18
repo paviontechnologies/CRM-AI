@@ -27,15 +27,19 @@ async function askClaude(userPrompt: string): Promise<any> {
 
 // ─── Lead Intent Scoring ────────────────────────────────────────────────────
 
-export const scoreLeadIntent = async (companyData: {
-  companyName: string;
-  industry?: string | null;
-  city?: string | null;
-  website?: string | null;
-  source?: string | null;
-  techStack?: string | null;
-  employeeSize?: string | null;
-}) => {
+export const scoreLeadIntent = async (
+  companyData: {
+    companyName: string;
+    industry?: string | null;
+    city?: string | null;
+    website?: string | null;
+    source?: string | null;
+    techStack?: string | null;
+    employeeSize?: string | null;
+  },
+  /** Org-specific ICP instructions from Organization.aiQualificationPrompt. */
+  qualificationPrompt?: string | null
+) => {
   if (!HAS_KEY) {
     const score = Math.floor(Math.random() * 40) + 60;
     return {
@@ -55,8 +59,12 @@ export const scoreLeadIntent = async (companyData: {
     };
   }
 
-  const prompt = `Analyze this company for B2B SaaS sales potential and return a JSON scoring object.
+  const icpSection = qualificationPrompt?.trim()
+    ? `\nApply these organisation-specific qualification criteria when scoring:\n${qualificationPrompt.trim()}\n`
+    : '';
 
+  const prompt = `Analyze this company for B2B SaaS sales potential and return a JSON scoring object.
+${icpSection}
 Company Data:
 ${JSON.stringify(companyData, null, 2)}
 

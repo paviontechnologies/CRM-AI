@@ -1,30 +1,38 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Plus, X, MoveRight, GitBranch } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { Plus, X, GitBranch, Trophy, Ban, IndianRupee, Building2, GripVertical } from 'lucide-react';
 import api from '@/lib/api';
 
-const STAGES = [
-  { key: 'NEW', label: 'New', color: 'bg-blue-500', light: 'bg-blue-50 border-blue-200' },
-  { key: 'QUALIFIED', label: 'Qualified', color: 'bg-indigo-500', light: 'bg-indigo-50 border-indigo-200' },
-  { key: 'CONTACTED', label: 'Contacted', color: 'bg-yellow-500', light: 'bg-yellow-50 border-yellow-200' },
-  { key: 'REPLIED', label: 'Replied', color: 'bg-orange-500', light: 'bg-orange-50 border-orange-200' },
-  { key: 'MEETING_BOOKED', label: 'Meeting', color: 'bg-purple-500', light: 'bg-purple-50 border-purple-200' },
-  { key: 'PROPOSAL_SENT', label: 'Proposal', color: 'bg-cyan-500', light: 'bg-cyan-50 border-cyan-200' },
-  { key: 'CLOSED_WON', label: 'Won', color: 'bg-green-500', light: 'bg-green-50 border-green-200' },
-  { key: 'CLOSED_LOST', label: 'Lost', color: 'bg-red-500', light: 'bg-red-50 border-red-200' },
-];
-
-interface LeadCard {
+interface Deal {
   id: string;
-  companyName: string;
-  contactName?: string;
-  email?: string;
-  industry?: string;
-  intentScore?: number;
-  stage?: string;
-  status?: string;
-  expectedRevenue?: number;
-  assignedTo?: string;
+  title: string;
+  value: number;
+  currency: string;
+  status: string;
+  expectedCloseDate?: string | null;
+  lead?: { id: string; companyName: string; contactName?: string | null } | null;
+  assignedTo?: { user: { id: string; name?: string | null } } | null;
+}
+
+interface Stage {
+  id: string;
+  name: string;
+  color?: string | null;
+  orderIndex: number;
+  totalValue: number;
+  deals: Deal[];
 }
 
 interface Pipeline {
@@ -32,41 +40,173 @@ interface Pipeline {
   name: string;
 }
 
-function ScoreChip({ score }: { score?: number }) {
-  if (!score) return null;
-  const cls = score >= 80 ? 'bg-green-100 text-green-700' : score >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-600';
-  return <span className={`text-xs px-1.5 py-0.5 rounded font-bold ${cls}`}>{score}</span>;
+const formatMoney = (value: number, currency = 'INR') =>
+  currency === 'INR'
+    ? `₹${value.toLocaleString('en-IN')}`
+    : `${currency} ${value.toLocaleString()}`;
+
+function DealCard({ deal, dragging }: { deal: Deal; dragging?: boolean }) {
+  return (
+    <div
+      className={`bg-white border rounded-xl p-3 shadow-sm transition-all ${
+        dragging ? 'border-blue-400 shadow-lg rotate-2' : 'border-gray-200 hover:border-blue-200 hover:shadow-md'
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <GripVertical className="w-3.5 h-3.5 text-gray-300 mt-0.5 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{deal.title}</p>
+          {deal.lead && (
+            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1 truncate">
+              <Building2 className="w-3 h-3 flex-shrink-0" />
+              {deal.lead.companyName}
+            </p>
+          )}
+          <p className="text-sm font-bold text-gray-800 mt-1.5">
+            {formatMoney(deal.value, deal.currency)}
+          </p>
+          {deal.assignedTo?.user?.name && (
+            <p className="text-xs text-gray-400 mt-1">{deal.assignedTo.user.name}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function MoveModal({
-  lead,
-  onClose,
-  onMoved,
-  pipelineId,
+function DraggableDeal({ deal, onWin, onLose }: { deal: Deal; onWin: () => void; onLose: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: deal.id });
+
+  return (
+    <div ref={setNodeRef} className={`group ${isDragging ? 'opacity-40' : ''}`}>
+      <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
+        <DealCard deal={deal} />
+      </div>
+      <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={onWin}
+          className="flex-1 flex items-center justify-center gap-1 py-1 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-medium transition-colors"
+        >
+          <Trophy className="w-3 h-3" /> Won
+        </button>
+        <button
+          onClick={onLose}
+          className="flex-1 flex items-center justify-center gap-1 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition-colors"
+        >
+          <Ban className="w-3 h-3" /> Lost
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function StageColumn({
+  stage,
+  onWin,
+  onLose,
 }: {
-  lead: LeadCard;
-  onClose: () => void;
-  onMoved: () => void;
-  pipelineId: string;
+  stage: Stage;
+  onWin: (deal: Deal) => void;
+  onLose: (deal: Deal) => void;
 }) {
-  const [toStage, setToStage] = useState('');
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id });
+
+  return (
+    <div className="w-72 flex-shrink-0 flex flex-col">
+      <div
+        className="flex items-center justify-between px-3 py-2.5 rounded-xl border mb-3"
+        style={{
+          backgroundColor: `${stage.color || '#6b7280'}12`,
+          borderColor: `${stage.color || '#6b7280'}33`,
+        }}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: stage.color || '#6b7280' }}
+          />
+          <span className="text-sm font-semibold text-gray-800 truncate">{stage.name}</span>
+        </div>
+        <span className="text-xs font-bold text-gray-600 bg-white px-1.5 py-0.5 rounded-lg flex-shrink-0">
+          {stage.deals.length}
+        </span>
+      </div>
+
+      {stage.totalValue > 0 && (
+        <div className="text-xs text-gray-500 px-1 mb-2 font-medium">
+          {formatMoney(stage.totalValue)} in play
+        </div>
+      )}
+
+      <div
+        ref={setNodeRef}
+        className={`space-y-2.5 min-h-[200px] flex-1 rounded-xl transition-colors p-1 ${
+          isOver ? 'bg-blue-50 ring-2 ring-blue-300 ring-inset' : ''
+        }`}
+      >
+        {stage.deals.length === 0 && (
+          <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
+            <p className="text-xs text-gray-400">Drop a deal here</p>
+          </div>
+        )}
+        {stage.deals.map((deal) => (
+          <DraggableDeal
+            key={deal.id}
+            deal={deal}
+            onWin={() => onWin(deal)}
+            onLose={() => onLose(deal)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NewDealModal({
+  stages,
+  onClose,
+  onCreated,
+}: {
+  stages: Stage[];
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [title, setTitle] = useState('');
+  const [value, setValue] = useState('');
+  const [stageId, setStageId] = useState(stages[0]?.id || '');
+  const [leadId, setLeadId] = useState('');
+  const [expectedCloseDate, setExpectedCloseDate] = useState('');
+  const [leads, setLeads] = useState<{ id: string; companyName: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleMove = async () => {
-    if (!toStage) return;
+  useEffect(() => {
+    api
+      .get('/leads', { params: { limit: 200 } })
+      .then((res) => setLeads(res.data.leads || []))
+      .catch(() => setLeads([]));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
     setLoading(true);
     setError('');
     try {
-      await api.post('/pipeline/move', {
-        leadId: lead.id,
-        pipelineId,
-        toStage,
+      await api.post('/deals', {
+        title: title.trim(),
+        value: Number(value) || 0,
+        stageId: stageId || undefined,
+        leadId: leadId || undefined,
+        // The API expects a full ISO datetime, not the date-only input value.
+        expectedCloseDate: expectedCloseDate
+          ? new Date(expectedCloseDate).toISOString()
+          : undefined,
       });
-      onMoved();
+      onCreated();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to move lead');
+      setError(err.response?.data?.error || 'Failed to create deal');
     } finally {
       setLoading(false);
     }
@@ -74,55 +214,100 @@ function MoveModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="font-bold text-gray-900">Move Lead</h3>
+          <h3 className="font-bold text-gray-900">New Deal</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <p className="text-sm text-gray-500 mb-1">Moving</p>
-            <p className="font-semibold text-gray-900">{lead.companyName}</p>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Deal title</label>
+            <input
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Apollo Hospitals — HMS rollout"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Value (₹)</label>
+              <input
+                type="number"
+                min="0"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="0"
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Close date</label>
+              <input
+                type="date"
+                value={expectedCloseDate}
+                onChange={(e) => setExpectedCloseDate(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Move to Stage</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stage</label>
             <select
-              value={toStage}
-              onChange={(e) => setToStage(e.target.value)}
+              value={stageId}
+              onChange={(e) => setStageId(e.target.value)}
               className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select stage...</option>
-              {STAGES.map((s) => (
-                <option key={s.key} value={s.key}>{s.label}</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Link to lead <span className="font-normal text-gray-400">(optional)</span>
+            </label>
+            <select
+              value={leadId}
+              onChange={(e) => setLeadId(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">No lead</option>
+              {leads.map((l) => (
+                <option key={l.id} value={l.id}>{l.companyName}</option>
+              ))}
+            </select>
+          </div>
+
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">{error}</div>
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
+              {error}
+            </div>
           )}
-          <div className="flex gap-3">
+
+          <div className="flex gap-3 pt-1">
             <button
+              type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
-              onClick={handleMove}
-              disabled={!toStage || loading}
-              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              type="submit"
+              disabled={!title.trim() || loading}
+              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
             >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <MoveRight className="w-4 h-4" />
-              )}
-              Move
+              {loading ? 'Creating…' : 'Create Deal'}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
@@ -131,57 +316,58 @@ function MoveModal({
 export default function PipelinePage() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [activePipelineId, setActivePipelineId] = useState<string | null>(null);
-  const [leads, setLeads] = useState<LeadCard[]>([]);
+  const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState(true);
   const [creatingPipeline, setCreatingPipeline] = useState(false);
   const [newPipelineName, setNewPipelineName] = useState('');
-  const [movingLead, setMovingLead] = useState<LeadCard | null>(null);
+  const [showNewDeal, setShowNewDeal] = useState(false);
+  const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
   const [error, setError] = useState('');
 
-  const fetchPipelines = async () => {
+  // A small activation distance keeps the Won/Lost buttons clickable.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const fetchPipelines = useCallback(async () => {
     try {
       const res = await api.get('/pipeline');
-      const data = Array.isArray(res.data) ? res.data : res.data.pipelines || [];
+      const data: Pipeline[] = Array.isArray(res.data) ? res.data : [];
       setPipelines(data);
-      if (data.length > 0 && !activePipelineId) {
-        setActivePipelineId(data[0].id);
-      }
-    } catch (err) {
-      console.error(err);
+      setActivePipelineId((current) => current || data[0]?.id || null);
+      if (data.length === 0) setLoading(false);
+    } catch {
+      setError('Could not load pipelines');
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchLeads = async (pipelineId: string) => {
+  const fetchBoard = useCallback(async (pipelineId: string) => {
     setLoading(true);
     try {
-      const res = await api.get(`/pipeline/${pipelineId}/leads`);
-      setLeads(Array.isArray(res.data) ? res.data : res.data.leads || []);
-    } catch (err) {
-      console.error(err);
-      setLeads([]);
+      const res = await api.get(`/pipeline/${pipelineId}/board`);
+      setStages(res.data.stages || []);
+    } catch {
+      setError('Could not load the board');
+      setStages([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchPipelines();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (activePipelineId) fetchLeads(activePipelineId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePipelineId]);
+    fetchPipelines();
+  }, [fetchPipelines]);
+
+  useEffect(() => {
+    if (activePipelineId) fetchBoard(activePipelineId);
+  }, [activePipelineId, fetchBoard]);
 
   const handleCreatePipeline = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPipelineName.trim()) return;
     try {
-      const res = await api.post('/pipeline', { name: newPipelineName });
-      const newPipeline = res.data.pipeline || res.data;
-      setPipelines((prev) => [...prev, newPipeline]);
-      setActivePipelineId(newPipeline.id);
+      const res = await api.post('/pipeline', { name: newPipelineName.trim() });
+      setPipelines((prev) => [...prev, res.data]);
+      setActivePipelineId(res.data.id);
       setCreatingPipeline(false);
       setNewPipelineName('');
     } catch (err: any) {
@@ -189,54 +375,116 @@ export default function PipelinePage() {
     }
   };
 
-  const leadsInStage = (stage: string) =>
-    leads.filter((l) => (l.stage || l.status) === stage);
+  const handleDragStart = (event: DragStartEvent) => {
+    const deal = stages.flatMap((s) => s.deals).find((d) => d.id === event.active.id);
+    setActiveDeal(deal || null);
+  };
 
-  const totalRevenue = (stage: string) =>
-    leadsInStage(stage).reduce((sum, l) => sum + (l.expectedRevenue || 0), 0);
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveDeal(null);
+    if (!over) return;
 
-  if (loading && activePipelineId) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
+    const dealId = String(active.id);
+    const toStageId = String(over.id);
+    const fromStage = stages.find((s) => s.deals.some((d) => d.id === dealId));
+    if (!fromStage || fromStage.id === toStageId) return;
+
+    const deal = fromStage.deals.find((d) => d.id === dealId)!;
+    const snapshot = stages;
+
+    // Move optimistically — the board should feel instant.
+    setStages((prev) =>
+      prev.map((s) => {
+        if (s.id === fromStage.id) {
+          return {
+            ...s,
+            deals: s.deals.filter((d) => d.id !== dealId),
+            totalValue: s.totalValue - deal.value,
+          };
+        }
+        if (s.id === toStageId) {
+          return { ...s, deals: [deal, ...s.deals], totalValue: s.totalValue + deal.value };
+        }
+        return s;
+      })
     );
-  }
+
+    try {
+      await api.patch(`/deals/${dealId}/move`, { stageId: toStageId });
+    } catch (err: any) {
+      setStages(snapshot);
+      setError(err.response?.data?.error || 'Could not move the deal');
+    }
+  };
+
+  const handleStatus = async (deal: Deal, status: 'won' | 'lost') => {
+    const snapshot = stages;
+    // Closed deals leave the board — getBoard only returns open ones.
+    setStages((prev) =>
+      prev.map((s) => ({
+        ...s,
+        deals: s.deals.filter((d) => d.id !== deal.id),
+        totalValue: s.deals.some((d) => d.id === deal.id) ? s.totalValue - deal.value : s.totalValue,
+      }))
+    );
+    try {
+      await api.patch(`/deals/${deal.id}/status`, { status });
+    } catch (err: any) {
+      setStages(snapshot);
+      setError(err.response?.data?.error || 'Could not update the deal');
+    }
+  };
+
+  const totalPipelineValue = stages.reduce((sum, s) => sum + s.totalValue, 0);
+  const totalDeals = stages.reduce((sum, s) => sum + s.deals.length, 0);
 
   return (
-    <div className="space-y-5 h-full">
-      {movingLead && activePipelineId && (
-        <MoveModal
-          lead={movingLead}
-          pipelineId={activePipelineId}
-          onClose={() => setMovingLead(null)}
-          onMoved={() => {
-            if (activePipelineId) fetchLeads(activePipelineId);
-            setMovingLead(null);
-          }}
+    <div className="space-y-5">
+      {showNewDeal && (
+        <NewDealModal
+          stages={stages}
+          onClose={() => setShowNewDeal(false)}
+          onCreated={() => activePipelineId && fetchBoard(activePipelineId)}
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Pipeline</h1>
-          <p className="text-gray-500 text-sm mt-1">Visual kanban view of your sales pipeline</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {totalDeals} open {totalDeals === 1 ? 'deal' : 'deals'} · {formatMoney(totalPipelineValue)} total
+          </p>
         </div>
-        <button
-          onClick={() => setCreatingPipeline(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-blue-200"
-        >
-          <Plus className="w-4 h-4" />
-          New Pipeline
-        </button>
+        <div className="flex gap-2">
+          {stages.length > 0 && (
+            <button
+              onClick={() => setShowNewDeal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-blue-200"
+            >
+              <IndianRupee className="w-4 h-4" />
+              New Deal
+            </button>
+          )}
+          <button
+            onClick={() => setCreatingPipeline(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Pipeline
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{error}</div>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center justify-between">
+          {error}
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
-      {/* Create Pipeline Form */}
       {creatingPipeline && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
           <form onSubmit={handleCreatePipeline} className="flex items-center gap-3">
@@ -264,8 +512,7 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Pipeline tabs */}
-      {pipelines.length > 0 && (
+      {pipelines.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {pipelines.map((p) => (
             <button
@@ -283,14 +530,21 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* No pipeline */}
-      {pipelines.length === 0 && !loading && (
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!loading && pipelines.length === 0 && (
         <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
           <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <GitBranch className="w-7 h-7 text-gray-400" />
           </div>
           <p className="text-gray-700 font-semibold text-lg">No pipelines yet</p>
-          <p className="text-gray-400 text-sm mt-1 mb-6">Create your first pipeline to start tracking deals</p>
+          <p className="text-gray-400 text-sm mt-1 mb-6">
+            Create a pipeline to start tracking deals through stages
+          </p>
           <button
             onClick={() => setCreatingPipeline(true)}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors"
@@ -300,78 +554,32 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Kanban Board */}
-      {activePipelineId && (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-max">
-            {STAGES.map((stage) => {
-              const stageLeads = leadsInStage(stage.key);
-              const revenue = totalRevenue(stage.key);
-              return (
-                <div key={stage.key} className="w-64 flex-shrink-0">
-                  {/* Column Header */}
-                  <div className={`flex items-center justify-between px-3 py-2.5 rounded-xl border mb-3 ${stage.light}`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                      <span className="text-sm font-semibold text-gray-800">{stage.label}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-gray-600 bg-white px-1.5 py-0.5 rounded-lg">
-                        {stageLeads.length}
-                      </span>
-                    </div>
-                  </div>
-                  {revenue > 0 && (
-                    <div className="text-xs text-gray-400 px-1 mb-2">
-                      ₹{revenue.toLocaleString('en-IN')} potential
-                    </div>
-                  )}
-
-                  {/* Cards */}
-                  <div className="space-y-2.5 min-h-[200px]">
-                    {stageLeads.length === 0 && (
-                      <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center">
-                        <p className="text-xs text-gray-400">No leads</p>
-                      </div>
-                    )}
-                    {stageLeads.map((lead) => (
-                      <div
-                        key={lead.id}
-                        className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group"
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0">
-                            {lead.companyName?.charAt(0)?.toUpperCase() || '?'}
-                          </div>
-                          <ScoreChip score={lead.intentScore} />
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900 leading-tight">{lead.companyName}</p>
-                        {lead.contactName && (
-                          <p className="text-xs text-gray-400 mt-0.5">{lead.contactName}</p>
-                        )}
-                        {lead.email && (
-                          <p className="text-xs text-gray-400 mt-0.5 truncate">{lead.email}</p>
-                        )}
-                        {lead.industry && (
-                          <span className="inline-block mt-1.5 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                            {lead.industry}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => setMovingLead(lead)}
-                          className="mt-2.5 w-full flex items-center justify-center gap-1 py-1.5 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 text-gray-500 rounded-lg text-xs font-medium transition-colors opacity-0 group-hover:opacity-100"
-                        >
-                          <MoveRight className="w-3 h-3" />
-                          Move
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+      {!loading && stages.length > 0 && (
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-4 min-w-max">
+              {stages.map((stage) => (
+                <StageColumn
+                  key={stage.id}
+                  stage={stage}
+                  onWin={(deal) => handleStatus(deal, 'won')}
+                  onLose={(deal) => handleStatus(deal, 'lost')}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+          <DragOverlay>{activeDeal && <DealCard deal={activeDeal} dragging />}</DragOverlay>
+        </DndContext>
+      )}
+
+      {!loading && pipelines.length > 0 && totalDeals === 0 && stages.length > 0 && (
+        <p className="text-center text-sm text-gray-400">
+          No open deals yet.{' '}
+          <button onClick={() => setShowNewDeal(true)} className="text-blue-600 font-medium hover:underline">
+            Create your first deal
+          </button>{' '}
+          or <Link href="/leads" className="text-blue-600 font-medium hover:underline">pick a lead</Link>.
+        </p>
       )}
     </div>
   );

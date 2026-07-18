@@ -10,6 +10,7 @@ import {
   scoreLeadAI,
   generateOutreach,
   generateLeadsAI,
+  previewOutreach,
 } from '../controllers/leads.controller';
 import { authenticate } from '../middleware/auth.middleware';
 
@@ -19,6 +20,7 @@ router.use(authenticate);
 router.get('/', getLeads);
 router.post('/import', importLeads);
 router.post('/generate', generateLeadsAI);   // AI lead generator
+router.post('/outreach/preview', previewOutreach); // draft without saving a lead
 router.get('/:id', getLead);
 router.post('/', createLead);
 router.put('/:id', updateLead);

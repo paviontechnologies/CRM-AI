@@ -125,21 +125,16 @@ function GenerateModal({ template, onClose }: GenerateModalProps) {
     setResult(null);
     setError('');
     try {
-      // Create a temp lead and generate outreach
-      const leadRes = await api.post('/leads', {
+      // Preview endpoint drafts the copy without saving a throwaway lead.
+      const res = await api.post('/leads/outreach/preview', {
         companyName: companyName || 'Demo Company',
         contactName: contactName || undefined,
         city: city || undefined,
         industry: template.industry,
-        source: 'manual',
-      });
-      const leadId = leadRes.data?.id || leadRes.data?.lead?.id;
-      if (!leadId) throw new Error('Failed to create lead');
-      const outreachRes = await api.post(`/leads/${leadId}/outreach`, {
         channel: template.channel,
-        subtype: template.subtype,
+        templateType: template.subtype,
       });
-      setResult(outreachRes.data);
+      setResult(res.data);
     } catch (err: any) {
       setError(err.response?.data?.error || err.message || 'Failed to generate outreach');
     } finally {

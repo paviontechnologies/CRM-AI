@@ -52,7 +52,7 @@ export const getSystemStats = async (_req: AuthRequest, res: Response) => {
     const [totalUsers, totalOrgs, totalLeads, totalCampaigns, totalMessages] = await Promise.all([
       prisma.user.count(),
       prisma.organization.count(),
-      prisma.lead.count({ where: { status: { not: 'Deleted' } } }),
+      prisma.lead.count({ where: { status: { not: 'DELETED' } } }),
       prisma.campaign.count(),
       prisma.message.count()
     ]);

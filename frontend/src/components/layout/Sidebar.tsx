@@ -15,17 +15,23 @@ import {
   GitBranch,
   Zap,
   Globe,
+  ListTodo,
+  CreditCard,
+  Bot,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Lead Explorer', href: '/leads', icon: Users },
-  { name: 'Campaigns', href: '/campaigns', icon: Mail },
+  { name: 'Tasks', href: '/tasks', icon: ListTodo },
   { name: 'Pipeline', href: '/pipeline', icon: GitBranch },
+  { name: 'Campaigns', href: '/campaigns', icon: Mail },
   { name: 'AI Templates', href: '/ai-templates', icon: Target },
+  { name: 'AI Qualification', href: '/workflows', icon: Bot },
   { name: 'Analytics', href: '/analytics', icon: Activity },
   { name: 'Team', href: '/team', icon: UserCheck },
+  { name: 'Billing', href: '/billing', icon: CreditCard },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

@@ -1,6 +1,5 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 const DEFAULT_STAGES = [
@@ -20,7 +19,7 @@ export const getPipelines = async (req: AuthRequest, res: Response) => {
     const pipelines = await prisma.pipeline.findMany({
       where: { organizationId: orgId },
       include: {
-        stages: { orderBy: { orderIndex: 'asc' }, include: { _count: { select: { leads: true } } } }
+        stages: { orderBy: { orderIndex: 'asc' }, include: { _count: { select: { deals: true } } } }
       },
       orderBy: { createdAt: 'asc' }
     });
@@ -55,51 +54,8 @@ export const createPipeline = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const moveLead = async (req: AuthRequest, res: Response) => {
-  try {
-    const orgId = req.user!.orgId;
-    const { leadId, stageId } = req.body;
-
-    if (!leadId || !stageId) {
-      return res.status(400).json({ error: 'leadId and stageId are required' });
-    }
-
-    // Verify lead belongs to org
-    const lead = await prisma.lead.findFirst({ where: { id: leadId, organizationId: orgId } });
-    if (!lead) return res.status(404).json({ error: 'Lead not found' });
-
-    // Verify stage belongs to org
-    const stage = await prisma.pipelineStage.findFirst({
-      where: { id: stageId },
-      include: { pipeline: true }
-    });
-    if (!stage || stage.pipeline.organizationId !== orgId) {
-      return res.status(404).json({ error: 'Stage not found' });
-    }
-
-    const stageLead = await prisma.pipelineStageLead.upsert({
-      where: { leadId },
-      update: { stageId, movedAt: new Date() },
-      create: { leadId, stageId }
-    });
-
-    await prisma.activity.create({
-      data: {
-        leadId,
-        type: 'stage_change',
-        notes: `Moved to "${stage.name}"`,
-        metadata: JSON.stringify({ stageId, stageName: stage.name, pipelineId: stage.pipelineId })
-      }
-    });
-
-    res.status(200).json(stageLead);
-  } catch (error) {
-    console.error('Move lead error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-export const getPipelineLeads = async (req: AuthRequest, res: Response) => {
+// GET /api/pipeline/:id/board — kanban of open deals grouped by stage
+export const getBoard = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const orgId = req.user!.orgId;
@@ -111,30 +67,29 @@ export const getPipelineLeads = async (req: AuthRequest, res: Response) => {
       where: { pipelineId: id },
       orderBy: { orderIndex: 'asc' },
       include: {
-        leads: {
+        deals: {
+          where: { status: 'open' },
+          orderBy: { createdAt: 'desc' },
           include: {
-            lead: {
-              include: {
-                assignedTo: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
-                scores: { orderBy: { createdAt: 'desc' }, take: 1 }
-              }
-            }
+            lead: { select: { id: true, companyName: true, contactName: true, intentScore: true } },
+            assignedTo: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } }
           }
         }
       }
     });
 
-    const kanban = stages.map((stage) => ({
+    const board = stages.map((stage) => ({
       id: stage.id,
       name: stage.name,
       color: stage.color,
       orderIndex: stage.orderIndex,
-      leads: stage.leads.map((sl) => sl.lead)
+      totalValue: stage.deals.reduce((sum, d) => sum + d.value, 0),
+      deals: stage.deals
     }));
 
-    res.status(200).json({ pipeline, stages: kanban });
+    res.status(200).json({ pipeline, stages: board });
   } catch (error) {
-    console.error('Get pipeline leads error:', error);
+    console.error('Get board error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

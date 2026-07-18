@@ -1,5 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Search,
   Filter,
@@ -181,7 +183,22 @@ function OutreachModal({ lead, onClose }: OutreachModalProps) {
   );
 }
 
+// useSearchParams requires a Suspense boundary or the production build fails.
 export default function LeadsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <LeadsPageContent />
+    </Suspense>
+  );
+}
+
+function LeadsPageContent() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [scoringId, setScoringId] = useState<string | null>(null);
@@ -189,8 +206,9 @@ export default function LeadsPage() {
   const [isGenerateOpen, setGenerateOpen] = useState(false);
   const [outreachLead, setOutreachLead] = useState<Lead | null>(null);
 
-  // Filters
-  const [search, setSearch] = useState('');
+  // Filters — seeded from ?search= so the header search box lands here.
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [industryFilter, setIndustryFilter] = useState('ALL');
 
@@ -226,6 +244,12 @@ export default function LeadsPage() {
     const timer = setTimeout(() => fetchLeads(), 300);
     return () => clearTimeout(timer);
   }, [fetchLeads]);
+
+  // Re-searching from the header while already on this page changes the URL, not the mount.
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '');
+    setPage(1);
+  }, [searchParams]);
 
   const handleScore = async (lead: Lead) => {
     setScoringId(lead.id);
@@ -399,12 +423,14 @@ export default function LeadsPage() {
               {!loading && leads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-3">
+                    <Link href={`/leads/${lead.id}`} className="flex items-center gap-3 group/link">
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
                         {lead.companyName?.charAt(0)?.toUpperCase() || '?'}
                       </div>
-                      <span className="font-semibold text-gray-900 text-sm">{lead.companyName}</span>
-                    </div>
+                      <span className="font-semibold text-gray-900 text-sm group-hover/link:text-blue-600 group-hover/link:underline transition-colors">
+                        {lead.companyName}
+                      </span>
+                    </Link>
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="text-sm text-gray-700">{lead.contactName || '-'}</div>

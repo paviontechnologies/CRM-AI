@@ -11,27 +11,22 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 
     const [totalLeads, hotLeads, campaigns, totalMessages, thisWeekLeads, closedWon, closedTotal] =
       await Promise.all([
-        prisma.lead.count({ where: { organizationId: orgId, status: { not: 'Deleted' } } }),
+        prisma.lead.count({ where: { organizationId: orgId, status: { not: 'DELETED' } } }),
         prisma.lead.count({
-          where: { organizationId: orgId, intentScore: { gte: 80 }, status: { not: 'Deleted' } }
+          where: { organizationId: orgId, intentScore: { gte: 80 }, status: { not: 'DELETED' } }
         }),
         prisma.campaign.count({ where: { organizationId: orgId } }),
         prisma.message.count({
           where: { lead: { organizationId: orgId }, direction: 'inbound' }
         }),
         prisma.lead.count({
-          where: { organizationId: orgId, createdAt: { gte: weekStart }, status: { not: 'Deleted' } }
+          where: { organizationId: orgId, createdAt: { gte: weekStart }, status: { not: 'DELETED' } }
         }),
-        prisma.pipelineStageLead.count({
-          where: { stage: { pipeline: { organizationId: orgId }, name: 'Closed Won' } }
+        prisma.deal.count({
+          where: { organizationId: orgId, status: 'won' }
         }),
-        prisma.pipelineStageLead.count({
-          where: {
-            stage: {
-              pipeline: { organizationId: orgId },
-              name: { in: ['Closed Won', 'Closed Lost'] }
-            }
-          }
+        prisma.deal.count({
+          where: { organizationId: orgId, status: { in: ['won', 'lost'] } }
         })
       ]);
 
@@ -59,7 +54,7 @@ export const getLeadsBySource = async (req: AuthRequest, res: Response) => {
 
     const groups = await prisma.lead.groupBy({
       by: ['source'],
-      where: { organizationId: orgId, status: { not: 'Deleted' } },
+      where: { organizationId: orgId, status: { not: 'DELETED' } },
       _count: { source: true }
     });
 
@@ -81,7 +76,7 @@ export const getLeadsByIndustry = async (req: AuthRequest, res: Response) => {
 
     const groups = await prisma.lead.groupBy({
       by: ['industry'],
-      where: { organizationId: orgId, status: { not: 'Deleted' } },
+      where: { organizationId: orgId, status: { not: 'DELETED' } },
       _count: { industry: true },
       orderBy: { _count: { industry: 'desc' } },
       take: 10
@@ -105,7 +100,7 @@ export const getLeadsByStatus = async (req: AuthRequest, res: Response) => {
 
     const groups = await prisma.lead.groupBy({
       by: ['status'],
-      where: { organizationId: orgId, status: { not: 'Deleted' } },
+      where: { organizationId: orgId, status: { not: 'DELETED' } },
       _count: { status: true }
     });
 
@@ -185,7 +180,7 @@ export const getWeeklyLeads = async (req: AuthRequest, res: Response) => {
       const count = await prisma.lead.count({
         where: {
           organizationId: orgId,
-          status: { not: 'Deleted' },
+          status: { not: 'DELETED' },
           createdAt: { gte: start, lte: end }
         }
       });

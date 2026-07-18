@@ -159,8 +159,30 @@ export const login = async (req: Request, res: Response) => {
 
 export const googleAuth = async (req: Request, res: Response) => {
   try {
-    const { googleId, email, name, avatarUrl, companyName } = req.body;
-    if (!googleId || !email) return res.status(400).json({ error: 'Missing google credentials' });
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(501).json({ error: 'Google sign-in is not configured' });
+    }
+
+    const { idToken, companyName } = req.body;
+    if (!idToken) return res.status(400).json({ error: 'idToken is required' });
+
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    let payload;
+    try {
+      const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
+      payload = ticket.getPayload();
+    } catch {
+      return res.status(401).json({ error: 'Invalid Google token' });
+    }
+    if (!payload?.sub || !payload.email) {
+      return res.status(401).json({ error: 'Invalid Google token' });
+    }
+
+    const googleId = payload.sub;
+    const email = payload.email;
+    const name = payload.name;
+    const avatarUrl = payload.picture;
 
     let user = await prisma.user.findFirst({ where: { OR: [{ googleId }, { email }] } });
 
@@ -332,10 +354,14 @@ export const updateOrg = async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, role } = req.user!;
     if (!['ADMIN', 'SUPERADMIN'].includes(role)) return res.status(403).json({ error: 'Forbidden' });
-    const { name, logoUrl } = req.body;
+    const { name, logoUrl, aiQualificationPrompt } = req.body;
     const updated = await prisma.organization.update({
       where: { id: orgId },
-      data: { ...(name && { name }), ...(logoUrl !== undefined && { logoUrl }) }
+      data: {
+        ...(name && { name }),
+        ...(logoUrl !== undefined && { logoUrl }),
+        ...(aiQualificationPrompt !== undefined && { aiQualificationPrompt })
+      }
     });
     res.status(200).json(updated);
   } catch (error) {
@@ -380,7 +406,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
       select: {
         id: true, name: true, slug: true, logoUrl: true, subscription: true,
         planCredits: true, usedLeadCredits: true, usedAiCredits: true,
-        usedEmailCredits: true, usedWaCredits: true
+        usedEmailCredits: true, usedWaCredits: true, aiQualificationPrompt: true
       }
     });
 
