@@ -66,7 +66,7 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
+        <div className="bg-gradient-to-r from-brand-600 to-brand-600 px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -74,7 +74,7 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
               </div>
               <div>
                 <h2 className="text-white font-bold text-lg">AI Lead Generator</h2>
-                <p className="text-blue-100 text-xs">Generate targeted leads for your niche using AI</p>
+                <p className="text-brand-100 text-xs">Generate targeted leads for your niche using AI</p>
               </div>
             </div>
             <button onClick={handleClose} className="text-white/70 hover:text-white transition-colors">
@@ -91,41 +91,41 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-black text-gray-900 mb-1">
+              <h3 className="text-xl font-bold text-slate-900 mb-1">
                 {result.created} Leads Generated!
               </h3>
-              <p className="text-gray-500 text-sm mb-1">
+              <p className="text-slate-500 text-sm mb-1">
                 {result.duplicatesSkipped > 0 && `${result.duplicatesSkipped} duplicates skipped.`}
               </p>
-              <p className="text-gray-400 text-xs mb-6">
+              <p className="text-slate-400 text-xs mb-6">
                 All new leads have been added to your Lead Explorer.
               </p>
 
               {/* Preview first 3 leads */}
               <div className="space-y-2 text-left mb-6">
                 {result.leads.slice(0, 3).map((lead: any, i: number) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                    <div className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
                       {lead.companyName?.charAt(0)}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 text-sm truncate">{lead.companyName}</div>
-                      <div className="text-xs text-gray-400 truncate">{lead.contactName} · {lead.email}</div>
+                      <div className="font-semibold text-slate-900 text-sm truncate">{lead.companyName}</div>
+                      <div className="text-xs text-slate-400 truncate">{lead.contactName} · {lead.email}</div>
                     </div>
                   </div>
                 ))}
                 {result.leads.length > 3 && (
-                  <p className="text-center text-xs text-gray-400">+{result.leads.length - 3} more leads added</p>
+                  <p className="text-center text-xs text-slate-400">+{result.leads.length - 3} more leads added</p>
                 )}
               </div>
 
               <div className="flex gap-3">
                 <button onClick={handleClose}
-                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
                   Close
                 </button>
                 <button onClick={() => setResult(null)}
-                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+                  className="flex-1 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors">
                   Generate More
                 </button>
               </div>
@@ -135,11 +135,11 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
             <div className="space-y-4">
               {/* Industry */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                  <Building2 className="w-4 h-4 text-blue-600" /> Industry / Niche *
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                  <Building2 className="w-4 h-4 text-brand-600" /> Industry / Niche *
                 </label>
                 <select value={industry} onChange={e => setIndustry(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
                   <option value="">Select industry...</option>
                   {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
@@ -148,42 +148,42 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
               {/* City + Country */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <MapPin className="w-4 h-4 text-blue-600" /> City *
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                    <MapPin className="w-4 h-4 text-brand-600" /> City *
                   </label>
                   <select value={city} onChange={e => setCity(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
                     <option value="">Select city...</option>
                     {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                     <option value="Other">Other</option>
                   </select>
                   {city === 'Other' && (
-                    <input placeholder="Enter city name" className="w-full mt-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    <input placeholder="Enter city name" className="w-full mt-2 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                       onChange={e => setCity(e.target.value)} />
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Country</label>
                   <input value={country} onChange={e => setCountry(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                 </div>
               </div>
 
               {/* Count + Size */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Users className="w-4 h-4 text-blue-600" /> Number of Leads
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                    <Users className="w-4 h-4 text-brand-600" /> Number of Leads
                   </label>
                   <select value={count} onChange={e => setCount(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
                     {[5, 10, 15, 20].map(n => <option key={n} value={n}>{n} leads</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Company Size</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Company Size</label>
                   <select value={employeeSize} onChange={e => setEmployeeSize(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
                     <option value="">Any size</option>
                     {EMPLOYEE_SIZES.map(s => <option key={s} value={s}>{s} employees</option>)}
                   </select>
@@ -192,12 +192,12 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
 
               {/* Keywords */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                  <Tag className="w-4 h-4 text-blue-600" /> Keywords / Focus <span className="font-normal text-gray-400">(optional)</span>
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                  <Tag className="w-4 h-4 text-brand-600" /> Keywords / Focus <span className="font-normal text-slate-400">(optional)</span>
                 </label>
                 <input value={keywords} onChange={e => setKeywords(e.target.value)}
                   placeholder="e.g. no CRM, manual processes, growing startup..."
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
@@ -209,11 +209,11 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
 
               <div className="pt-2 flex gap-3">
                 <button onClick={handleClose}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">
+                  className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
                   Cancel
                 </button>
                 <button onClick={handleGenerate} disabled={loading || !industry || !city}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                  className="flex-1 py-3 bg-gradient-to-r from-brand-600 to-brand-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-brand-200">
                   {loading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
                   ) : (
@@ -224,7 +224,7 @@ export function GenerateLeadsModal({ isOpen, onClose, onLeadsGenerated }: Genera
 
               {loading && (
                 <div className="text-center">
-                  <p className="text-xs text-gray-400 animate-pulse">
+                  <p className="text-xs text-slate-400 animate-pulse">
                     AI is finding {industry} companies in {city}...
                   </p>
                 </div>

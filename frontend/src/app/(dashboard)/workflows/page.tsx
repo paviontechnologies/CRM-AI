@@ -110,7 +110,7 @@ export default function WorkflowsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -119,8 +119,8 @@ export default function WorkflowsPage() {
     <div className="space-y-5 max-w-5xl">
       <div className="flex justify-between items-start flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">AI Qualification</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-900">AI Qualification</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Tell the AI what a good lead looks like for you. These instructions are applied every
             time a lead is scored.
           </p>
@@ -129,7 +129,7 @@ export default function WorkflowsPage() {
           onClick={handleSave}
           disabled={saving}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-60 ${
-            saved ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+            saved ? 'bg-green-600 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-200'
           }`}
         >
           {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
@@ -147,34 +147,34 @@ export default function WorkflowsPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden h-fit">
-          <div className="px-4 py-3 border-b bg-gray-50">
-            <h3 className="font-semibold text-sm text-gray-700">Starting points</h3>
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-fit">
+          <div className="px-4 py-3 border-b bg-slate-50">
+            <h3 className="font-semibold text-sm text-slate-700">Starting points</h3>
           </div>
           <div className="p-2 space-y-1">
             {PRESETS.map((preset) => (
               <button
                 key={preset.name}
                 onClick={() => setPrompt(preset.prompt)}
-                className="w-full text-left px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                className="w-full text-left px-3 py-2 text-sm rounded-lg text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors"
               >
                 {preset.name}
               </button>
             ))}
           </div>
-          <p className="px-4 pb-4 pt-1 text-xs text-gray-400">
+          <p className="px-4 pb-4 pt-1 text-xs text-slate-400">
             Picking one replaces the editor contents. Nothing is saved until you hit Save.
           </p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm">
           <div className="p-5 border-b flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+            <div className="p-2 bg-brand-100 text-brand-600 rounded-lg">
               <Bot size={20} />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900">Qualification instructions</h2>
-              <p className="text-xs text-gray-500">Applied on every AI lead score for your org</p>
+              <h2 className="font-semibold text-slate-900">Qualification instructions</h2>
+              <p className="text-xs text-slate-500">Applied on every AI lead score for your org</p>
             </div>
           </div>
 
@@ -183,16 +183,16 @@ export default function WorkflowsPage() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g. Score hospitals higher when they mention paperless records or run 100+ beds…"
-              className="w-full text-sm font-mono bg-gray-50 border border-gray-200 rounded-xl p-4 h-64 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl p-4 h-64 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
             />
-            <p className="text-xs text-gray-400 -mt-3">
+            <p className="text-xs text-slate-400 -mt-3">
               Leave empty to use the default generic B2B scoring.
             </p>
 
             <div className="border-t pt-5">
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-indigo-500" />
-                <h3 className="font-semibold text-sm text-gray-900">Try it on a sample company</h3>
+                <Sparkles className="w-4 h-4 text-brand-500" />
+                <h3 className="font-semibold text-sm text-slate-900">Try it on a sample company</h3>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -200,36 +200,36 @@ export default function WorkflowsPage() {
                   value={testCompany}
                   onChange={(e) => setTestCompany(e.target.value)}
                   placeholder="Company"
-                  className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <input
                   value={testIndustry}
                   onChange={(e) => setTestIndustry(e.target.value)}
                   placeholder="Industry"
-                  className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <input
                   value={testCity}
                   onChange={(e) => setTestCity(e.target.value)}
                   placeholder="City"
-                  className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
 
               <button
                 onClick={handleTest}
                 disabled={testing || !testCompany.trim()}
-                className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
+                className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
               >
                 <Play size={16} />
                 {testing ? 'Running…' : 'Generate sample outreach'}
               </button>
 
               {testResult && (
-                <div className="mt-4 bg-gray-900 rounded-xl p-4 overflow-x-auto">
+                <div className="mt-4 bg-slate-900 rounded-xl p-4 overflow-x-auto">
                   {testResult.subject && (
-                    <p className="text-xs text-gray-400 mb-2">
-                      <span className="text-gray-500">Subject:</span> {testResult.subject}
+                    <p className="text-xs text-slate-400 mb-2">
+                      <span className="text-slate-500">Subject:</span> {testResult.subject}
                     </p>
                   )}
                   <pre className="text-sm text-green-400 whitespace-pre-wrap font-mono">

@@ -58,10 +58,10 @@ function ScoreRing({ score, label }: { score?: number | null; label: string }) {
   if (score === null || score === undefined) {
     return (
       <div className="text-center">
-        <div className="w-14 h-14 rounded-full border-4 border-gray-100 flex items-center justify-center text-gray-300 text-sm font-bold">
+        <div className="w-14 h-14 rounded-full border-4 border-slate-100 flex items-center justify-center text-slate-300 text-sm font-bold">
           —
         </div>
-        <p className="text-xs text-gray-400 mt-1.5">{label}</p>
+        <p className="text-xs text-slate-400 mt-1.5">{label}</p>
       </div>
     );
   }
@@ -69,12 +69,12 @@ function ScoreRing({ score, label }: { score?: number | null; label: string }) {
   return (
     <div className="text-center">
       <div
-        className="w-14 h-14 rounded-full flex items-center justify-center text-sm font-black"
+        className="w-14 h-14 rounded-full flex items-center justify-center text-sm font-bold"
         style={{ border: `4px solid ${color}`, color }}
       >
         {score}
       </div>
-      <p className="text-xs text-gray-400 mt-1.5">{label}</p>
+      <p className="text-xs text-slate-400 mt-1.5">{label}</p>
     </div>
   );
 }
@@ -247,7 +247,7 @@ export default function LeadDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -255,8 +255,8 @@ export default function LeadDetailPage() {
   if (!lead) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-700 font-semibold text-lg">{error || 'Lead not found'}</p>
-        <Link href="/leads" className="text-blue-600 text-sm font-medium hover:underline mt-2 inline-block">
+        <p className="text-slate-700 font-semibold text-lg">{error || 'Lead not found'}</p>
+        <Link href="/leads" className="text-brand-600 text-sm font-medium hover:underline mt-2 inline-block">
           Back to leads
         </Link>
       </div>
@@ -268,13 +268,13 @@ export default function LeadDetailPage() {
   return (
     <div className="space-y-5 max-w-6xl">
       <div className="flex items-center justify-between">
-        <Link href="/leads" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+        <Link href="/leads" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to leads
         </Link>
         <button
           onClick={handleDeleteLead}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-600 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-600 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
           Delete
@@ -291,40 +291,40 @@ export default function LeadDetailPage() {
       )}
 
       {/* Header card */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-start gap-5 flex-wrap">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl flex-shrink-0">
+          <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
             {lead.companyName.charAt(0).toUpperCase()}
           </div>
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black text-gray-900">{lead.companyName}</h1>
-            {lead.contactName && <p className="text-gray-500 text-sm mt-0.5">{lead.contactName}</p>}
+            <h1 className="text-2xl font-bold text-slate-900">{lead.companyName}</h1>
+            {lead.contactName && <p className="text-slate-500 text-sm mt-0.5">{lead.contactName}</p>}
 
-            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-3 text-sm text-gray-600">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 mt-3 text-sm text-slate-600">
               {lead.email && (
-                <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
-                  <Mail className="w-3.5 h-3.5 text-gray-400" />{lead.email}
+                <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 hover:text-brand-600 transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-slate-400" />{lead.email}
                 </a>
               )}
               {lead.phone && (
-                <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
-                  <Phone className="w-3.5 h-3.5 text-gray-400" />{lead.phone}
+                <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 hover:text-brand-600 transition-colors">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />{lead.phone}
                 </a>
               )}
               {lead.website && (
-                <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
-                  <Globe className="w-3.5 h-3.5 text-gray-400" />Website
+                <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-brand-600 transition-colors">
+                  <Globe className="w-3.5 h-3.5 text-slate-400" />Website
                 </a>
               )}
               {lead.industry && (
-                <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-gray-400" />{lead.industry}</span>
+                <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-slate-400" />{lead.industry}</span>
               )}
               {lead.city && (
-                <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-gray-400" />{lead.city}</span>
+                <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400" />{lead.city}</span>
               )}
               {lead.employeeSize && (
-                <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-gray-400" />{lead.employeeSize}</span>
+                <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-slate-400" />{lead.employeeSize}</span>
               )}
             </div>
 
@@ -332,7 +332,7 @@ export default function LeadDetailPage() {
               <select
                 value={lead.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
@@ -342,14 +342,14 @@ export default function LeadDetailPage() {
               <button
                 onClick={handleScore}
                 disabled={scoring}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 {scoring ? 'Scoring…' : 'AI Score'}
               </button>
 
               {lead.assignedTo && (
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-slate-400">
                   Owner: {lead.assignedTo.user.name || lead.assignedTo.user.email}
                 </span>
               )}
@@ -363,11 +363,11 @@ export default function LeadDetailPage() {
         </div>
 
         {lead.scores[0]?.recommendation && (
-          <div className="mt-5 bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-            <p className="text-xs font-bold text-indigo-900 uppercase tracking-wide mb-1">AI Recommendation</p>
-            <p className="text-sm text-indigo-800">{lead.scores[0].recommendation}</p>
+          <div className="mt-5 bg-brand-50 border border-brand-100 rounded-xl p-4">
+            <p className="text-xs font-bold text-brand-900 uppercase tracking-wide mb-1">AI Recommendation</p>
+            <p className="text-sm text-brand-800">{lead.scores[0].recommendation}</p>
             {lead.scores[0].reasons && (
-              <p className="text-xs text-indigo-600 mt-2">{lead.scores[0].reasons}</p>
+              <p className="text-xs text-brand-600 mt-2">{lead.scores[0].reasons}</p>
             )}
           </div>
         )}
@@ -381,32 +381,32 @@ export default function LeadDetailPage() {
           { label: 'Messages', value: lead.messages.length, icon: MessageSquare },
           { label: 'Files', value: lead.attachments.length, icon: Paperclip },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-4">
-            <stat.icon className="w-4 h-4 text-gray-400 mb-2" />
-            <p className="text-2xl font-black text-gray-900">{stat.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-4">
+            <stat.icon className="w-4 h-4 text-slate-400 mb-2" />
+            <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Deals */}
       {lead.deals.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-          <h2 className="font-bold text-gray-900 mb-3">Deals</h2>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h2 className="font-bold text-slate-900 mb-3">Deals</h2>
           <div className="space-y-2">
             {lead.deals.map((deal) => (
-              <div key={deal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div key={deal.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{deal.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{deal.stage.name}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{deal.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{deal.stage.name}</p>
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
-                  <p className="text-sm font-bold text-gray-900">
+                  <p className="text-sm font-bold text-slate-900">
                     ₹{deal.value.toLocaleString('en-IN')}
                   </p>
                   <span
                     className={`text-xs font-medium ${
-                      deal.status === 'won' ? 'text-green-600' : deal.status === 'lost' ? 'text-red-500' : 'text-gray-400'
+                      deal.status === 'won' ? 'text-green-600' : deal.status === 'lost' ? 'text-red-500' : 'text-slate-400'
                     }`}
                   >
                     {deal.status}
@@ -419,7 +419,7 @@ export default function LeadDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="flex border-b overflow-x-auto">
           {TABS.map((t) => (
             <button
@@ -427,8 +427,8 @@ export default function LeadDetailPage() {
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                 tab === t.key
-                  ? 'border-blue-600 text-blue-700 bg-blue-50/50'
-                  : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'border-brand-600 text-brand-700 bg-brand-50/50'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
               }`}
             >
               <t.icon className="w-4 h-4" />
@@ -441,14 +441,14 @@ export default function LeadDetailPage() {
           {tab === 'activity' && (
             <div className="space-y-3">
               {lead.activities.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-8">No activity recorded yet.</p>
+                <p className="text-sm text-slate-400 text-center py-8">No activity recorded yet.</p>
               )}
               {lead.activities.map((a) => (
                 <div key={a.id} className="flex gap-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
-                  <div className="min-w-0 flex-1 pb-3 border-b border-gray-50 last:border-0">
-                    <p className="text-sm text-gray-800">{a.notes || a.type}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                  <div className="w-2 h-2 rounded-full bg-brand-400 mt-1.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1 pb-3 border-b border-slate-50 last:border-0">
+                    <p className="text-sm text-slate-800">{a.notes || a.type}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
                       {a.type.replace(/_/g, ' ')} · {formatDate(a.createdAt)}
                     </p>
                   </div>
@@ -465,24 +465,24 @@ export default function LeadDetailPage() {
                   onChange={(e) => setNoteBody(e.target.value)}
                   placeholder="Add a note about this lead…"
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                 />
                 <button
                   type="submit"
                   disabled={!noteBody.trim() || savingNote}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+                  className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
                 >
                   {savingNote ? 'Saving…' : 'Add Note'}
                 </button>
               </form>
 
               {lead.noteEntries.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-6">No notes yet.</p>
+                <p className="text-sm text-slate-400 text-center py-6">No notes yet.</p>
               )}
               {lead.noteEntries.map((n) => (
                 <div key={n.id} className="bg-amber-50 border border-amber-100 rounded-xl p-4 group">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap flex-1">{n.body}</p>
+                    <p className="text-sm text-slate-800 whitespace-pre-wrap flex-1">{n.body}</p>
                     <button
                       onClick={() => handleDeleteNote(n.id)}
                       className="text-amber-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
@@ -507,24 +507,24 @@ export default function LeadDetailPage() {
                     value={taskTitle}
                     onChange={(e) => setTaskTitle(e.target.value)}
                     placeholder="Task title…"
-                    className="flex-1 min-w-48 px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 min-w-48 px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                   <input
                     type="date"
                     value={taskDue}
                     onChange={(e) => setTaskDue(e.target.value)}
-                    className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors"
                   >
                     Add
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowTaskForm(false)}
-                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors"
                   >
                     Cancel
                   </button>
@@ -532,30 +532,30 @@ export default function LeadDetailPage() {
               ) : (
                 <button
                   onClick={() => setShowTaskForm(true)}
-                  className="flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-brand-600 font-medium hover:text-brand-700 transition-colors"
                 >
                   <Plus className="w-4 h-4" /> Add task
                 </button>
               )}
 
               {lead.tasks.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-6">No tasks for this lead.</p>
+                <p className="text-sm text-slate-400 text-center py-6">No tasks for this lead.</p>
               )}
               {lead.tasks.map((t) => (
-                <div key={t.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <div key={t.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                   <button onClick={() => handleToggleTask(t.id, t.status)} className="flex-shrink-0">
                     {t.status === 'completed' ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     ) : (
-                      <Circle className="w-5 h-5 text-gray-300 hover:text-blue-500 transition-colors" />
+                      <Circle className="w-5 h-5 text-slate-300 hover:text-brand-500 transition-colors" />
                     )}
                   </button>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm ${t.status === 'completed' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                    <p className={`text-sm ${t.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
                       {t.title}
                     </p>
                     {t.dueDate && (
-                      <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                      <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {new Date(t.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </p>
@@ -569,14 +569,14 @@ export default function LeadDetailPage() {
           {tab === 'messages' && (
             <div className="space-y-3">
               {lead.messages.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-8">
+                <p className="text-sm text-slate-400 text-center py-8">
                   No messages yet. Generate outreach from the leads list.
                 </p>
               )}
               {lead.messages.map((m) => (
-                <div key={m.id} className="border border-gray-200 rounded-xl p-4">
+                <div key={m.id} className="border border-slate-200 rounded-xl p-4">
                   <div className="flex items-center justify-between gap-3 mb-2">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                       {m.direction} · {m.channel}
                     </span>
                     <span
@@ -584,18 +584,18 @@ export default function LeadDetailPage() {
                         m.status === 'opened'
                           ? 'bg-green-100 text-green-700'
                           : m.status === 'sent'
-                            ? 'bg-blue-100 text-blue-700'
+                            ? 'bg-brand-100 text-brand-700'
                             : m.status === 'failed'
                               ? 'bg-red-100 text-red-600'
-                              : 'bg-gray-100 text-gray-500'
+                              : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {m.status}
                     </span>
                   </div>
-                  {m.subject && <p className="text-sm font-semibold text-gray-900 mb-1">{m.subject}</p>}
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{m.body}</p>
-                  <p className="text-xs text-gray-400 mt-2">{formatDate(m.createdAt)}</p>
+                  {m.subject && <p className="text-sm font-semibold text-slate-900 mb-1">{m.subject}</p>}
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap">{m.body}</p>
+                  <p className="text-xs text-slate-400 mt-2">{formatDate(m.createdAt)}</p>
                 </div>
               ))}
             </div>
@@ -607,31 +607,31 @@ export default function LeadDetailPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700 transition-colors disabled:opacity-60"
+                className="flex items-center gap-1.5 text-sm text-brand-600 font-medium hover:text-brand-700 transition-colors disabled:opacity-60"
               >
                 <Plus className="w-4 h-4" />
                 {uploading ? 'Uploading…' : 'Upload file'}
               </button>
 
               {lead.attachments.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-6">No files attached.</p>
+                <p className="text-sm text-slate-400 text-center py-6">No files attached.</p>
               )}
               {lead.attachments.map((f) => (
-                <div key={f.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl group">
-                  <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <div key={f.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl group">
+                  <Paperclip className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-800 truncate">{f.fileName}</p>
-                    <p className="text-xs text-gray-400">{formatBytes(f.size)} · {formatDate(f.createdAt)}</p>
+                    <p className="text-sm text-slate-800 truncate">{f.fileName}</p>
+                    <p className="text-xs text-slate-400">{formatBytes(f.size)} · {formatDate(f.createdAt)}</p>
                   </div>
                   <button
                     onClick={() => handleDownload(f.id, f.fileName)}
-                    className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
+                    className="text-slate-400 hover:text-brand-600 transition-colors flex-shrink-0"
                   >
                     <Download className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteFile(f.id)}
-                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

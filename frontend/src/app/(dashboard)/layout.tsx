@@ -40,22 +40,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!token) return null;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-canvas overflow-hidden">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-14 bg-white border-b flex items-center px-6 gap-4 flex-shrink-0">
-          <form onSubmit={handleSearch} className="flex-1 flex items-center gap-3 max-w-lg">
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0">
+          <form
+            onSubmit={handleSearch}
+            className="flex-1 flex items-center gap-2.5 max-w-md h-10 px-3.5 rounded-xl bg-slate-100/70 border border-transparent focus-within:bg-white focus-within:border-brand-500 focus-within:shadow-[0_0_0_3px_var(--color-brand-100)] transition-all"
+          >
+            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search leads by company, contact or email…"
-              className="flex-1 text-sm text-gray-700 bg-transparent focus:outline-none placeholder-gray-400"
+              placeholder="Search leads…"
+              className="flex-1 text-sm text-slate-700 bg-transparent focus:outline-none placeholder-slate-400"
             />
+            <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-medium text-slate-400 bg-white border border-slate-200 rounded">↵</kbd>
           </form>
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-2 ml-auto">
             <NotificationBell />
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-brand-700 rounded-full flex items-center justify-center text-white text-sm font-semibold ring-2 ring-white shadow-sm">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
           </div>

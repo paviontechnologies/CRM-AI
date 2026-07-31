@@ -1,161 +1,194 @@
 import Link from 'next/link';
+import {
+  Target, Mail, Bot, GitBranch, BarChart3, LayoutTemplate,
+  Check, ArrowRight, Sparkles,
+} from 'lucide-react';
+
+const features = [
+  { icon: Target, title: 'AI intent scoring', desc: 'Every lead ranked 1–100 on buying intent, ICP fit, urgency and budget — automatically.' },
+  { icon: Mail, title: 'Personalized outreach', desc: 'Generate cold emails, WhatsApp and LinkedIn messages tailored to each lead in a click.' },
+  { icon: Bot, title: 'An assistant that acts', desc: 'Ask in plain language — the AI scores leads, drafts outreach and updates your pipeline for you.' },
+  { icon: GitBranch, title: 'Visual pipeline', desc: 'Drag-and-drop kanban tracking every deal from first touch to closed won.' },
+  { icon: BarChart3, title: 'Analytics that matter', desc: 'Conversion, reply rates and pipeline value in real time, in clean dashboards.' },
+  { icon: LayoutTemplate, title: 'Niche templates', desc: 'Pre-built qualification workflows for hospitals, restaurants, ERP buyers and more.' },
+];
+
+const steps = [
+  { step: '1', title: 'Import or generate', desc: 'Add leads manually, import a CSV, or let the AI find them.' },
+  { step: '2', title: 'AI scores intent', desc: 'Each lead is analysed and assigned a buying-intent score.' },
+  { step: '3', title: 'Generate outreach', desc: 'AI writes personalized messages for every prospect.' },
+  { step: '4', title: 'Track & close', desc: 'Move deals through the pipeline and close more, faster.' },
+];
+
+const plans = [
+  { name: 'Free', price: '$0', leads: '100 leads', ai: '50 AI credits', emails: '500 emails', popular: false },
+  { name: 'Starter', price: '$49', leads: '1,000 leads', ai: '500 AI credits', emails: '5,000 emails', popular: false },
+  { name: 'Growth', price: '$149', leads: '5,000 leads', ai: '2,000 AI credits', emails: '20,000 emails', popular: true },
+  { name: 'Agency', price: '$399', leads: 'Unlimited', ai: 'Unlimited AI', emails: 'Unlimited', popular: false },
+];
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-black text-sm">AI</span>
+      <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-8 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-[var(--shadow-brand)]">
+            <span className="text-white font-bold text-sm">PT</span>
           </div>
-          <span className="font-black text-xl text-gray-900">AI Lead Gen</span>
+          <span className="font-semibold text-slate-900">Pavion</span>
         </div>
-        <div className="flex gap-3">
-          <Link href="/login" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-            Sign In
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            Sign in
           </Link>
-          <Link href="/register" className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-            Get Started Free
+          <Link href="/register" className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition-colors shadow-[var(--shadow-brand)]">
+            Get started <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <div className="max-w-6xl mx-auto px-8 py-24 text-center">
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-8 border border-blue-100">
-          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse inline-block"></span>
-          AI-powered B2B Lead Generation
+      <section className="relative overflow-hidden">
+        <div
+          className="absolute inset-0 -z-10"
+          style={{ background: 'radial-gradient(700px circle at 50% -10%, rgba(79,70,229,0.10), transparent 60%)' }}
+        />
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 pt-20 pb-24 text-center">
+          <div className="inline-flex items-center gap-2 bg-brand-50 text-brand-700 px-3.5 py-1.5 rounded-full text-sm font-medium mb-8 border border-brand-100">
+            <Sparkles className="w-3.5 h-3.5" />
+            AI-native CRM for B2B sales
+          </div>
+          <h1 className="text-5xl sm:text-6xl font-bold text-slate-900 leading-[1.05] tracking-tight mb-6">
+            Find, score &amp; close
+            <br />
+            <span className="text-brand-600">B2B leads with AI</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Import leads, score buying intent, generate personalized outreach and automate follow-ups —
+            with an AI assistant that does the busywork for you.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link href="/register" className="inline-flex items-center gap-2 px-7 py-3.5 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 shadow-[var(--shadow-brand)] transition-colors">
+              Start free <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/login" className="px-7 py-3.5 bg-white text-slate-800 font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+              View demo
+            </Link>
+          </div>
+          <div className="mt-10 flex items-center justify-center gap-6 text-sm text-slate-400 flex-wrap">
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> No credit card</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> 100 free leads</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-500" /> 2-minute setup</span>
+          </div>
         </div>
-        <h1 className="text-6xl font-black text-gray-900 leading-tight mb-6">
-          Find, Score &amp; Close<br />
-          <span className="text-blue-600">B2B Leads with AI</span>
-        </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          Import leads, score buying intent with AI, generate personalized outreach, and automate follow-ups — all in one platform.
-        </p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link href="/register" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl text-lg hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all">
-            Start Free Trial
-          </Link>
-          <Link href="/login" className="px-8 py-4 bg-gray-50 text-gray-800 font-bold rounded-xl text-lg border border-gray-200 hover:bg-gray-100 transition-all">
-            View Demo
-          </Link>
-        </div>
+      </section>
 
-        {/* Social proof */}
-        <div className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-400">
-          <span>✓ No credit card required</span>
-          <span>✓ 100 free leads</span>
-          <span>✓ Setup in 2 minutes</span>
-        </div>
-      </div>
-
-      {/* Features Grid */}
-      <div className="max-w-6xl mx-auto px-8 pb-24">
+      {/* Features */}
+      <section className="max-w-6xl mx-auto px-6 sm:px-8 pb-24">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-black text-gray-900 mb-4">Everything you need to close more deals</h2>
-          <p className="text-gray-500 text-lg">One platform for the entire B2B sales process</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-3">Everything you need to close more deals</h2>
+          <p className="text-slate-500 text-lg">One platform for the entire B2B sales motion.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { icon: '🎯', title: 'AI Intent Scoring', desc: 'Score leads 1-100 on buying intent, ICP fit, urgency and budget potential using advanced AI models.' },
-            { icon: '✉️', title: 'Personalized Outreach', desc: 'Generate cold emails, WhatsApp messages, LinkedIn DMs tailored to each lead automatically.' },
-            { icon: '🤖', title: 'Campaign Automation', desc: 'Automate multi-day sequences with smart conditions and branching logic.' },
-            { icon: '📊', title: 'CRM Pipeline', desc: 'Visual kanban pipeline tracking every deal from New Lead to Closed Won.' },
-            { icon: '📈', title: 'Analytics Dashboard', desc: 'Track conversion rates, reply rates, and SDR performance in real-time with rich charts.' },
-            { icon: '🏥', title: 'Niche Templates', desc: 'Pre-built AI workflows for hospitals, clinics, restaurants, ERP buyers, and more.' },
-          ].map((f) => (
-            <div key={f.title} className="p-6 border border-gray-100 rounded-2xl hover:border-blue-200 hover:shadow-lg transition-all group">
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{f.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {features.map((f) => (
+            <div key={f.title} className="p-6 border border-slate-200 rounded-2xl hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5 transition-all group bg-white">
+              <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                <f.icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-1.5">{f.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* How it works */}
-      <div className="bg-gray-50 py-24">
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-black text-gray-900 mb-4">How it works</h2>
-            <p className="text-gray-500">From zero to closed deal in 4 steps</p>
+      <section className="bg-slate-50 border-y border-slate-100 py-24">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-3">How it works</h2>
+            <p className="text-slate-500 text-lg">From zero to closed deal in four steps.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              { step: '1', title: 'Import Leads', desc: 'Add leads manually, import CSV, or use our enrichment engine.' },
-              { step: '2', title: 'AI Scores Intent', desc: 'Our AI analyzes each lead and assigns a buying intent score.' },
-              { step: '3', title: 'Generate Outreach', desc: 'AI writes personalized emails and messages for each prospect.' },
-              { step: '4', title: 'Track & Close', desc: 'Monitor responses, move deals through your pipeline, close.' },
-            ].map((s) => (
+            {steps.map((s) => (
               <div key={s.step} className="text-center">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-lg mx-auto mb-4">
+                <div className="w-11 h-11 bg-brand-600 rounded-xl flex items-center justify-center text-white font-semibold mx-auto mb-4 shadow-[var(--shadow-brand)]">
                   {s.step}
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
-                <p className="text-gray-500 text-sm">{s.desc}</p>
+                <h3 className="font-semibold text-slate-900 mb-1.5">{s.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Pricing */}
-      <div className="py-24">
-        <div className="max-w-6xl mx-auto px-8 text-center">
-          <h2 className="text-4xl font-black text-gray-900 mb-4">Simple, transparent pricing</h2>
-          <p className="text-gray-500 mb-12">Start free. Scale as you grow. No hidden fees.</p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { name: 'Free', price: '$0', leads: '100 leads', ai: '50 AI credits', emails: '500 emails', color: 'border-gray-200', popular: false },
-              { name: 'Starter', price: '$49', leads: '1,000 leads', ai: '500 AI credits', emails: '5,000 emails', color: 'border-blue-200', popular: false },
-              { name: 'Growth', price: '$149', leads: '5,000 leads', ai: '2,000 AI credits', emails: '20,000 emails', color: 'border-indigo-200', popular: true },
-              { name: 'Agency', price: '$399', leads: 'Unlimited', ai: 'Unlimited AI', emails: 'Unlimited', color: 'border-purple-200', popular: false },
-            ].map((p) => (
-              <div key={p.name} className={`bg-white p-6 rounded-2xl border-2 ${p.color} relative ${p.popular ? 'shadow-xl scale-105' : 'shadow-sm'} transition-all hover:shadow-lg`}>
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-3">Simple, transparent pricing</h2>
+          <p className="text-slate-500 mb-14 text-lg">Start free. Scale as you grow. No hidden fees.</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            {plans.map((p) => (
+              <div
+                key={p.name}
+                className={`bg-white p-6 rounded-2xl border relative text-left transition-all ${
+                  p.popular ? 'border-brand-300 shadow-[var(--shadow-elevated)] md:scale-105' : 'border-slate-200 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)]'
+                }`}
+              >
                 {p.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                    Most Popular
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap shadow-[var(--shadow-brand)]">
+                    Most popular
                   </div>
                 )}
-                <div className="font-bold text-gray-500 text-sm mb-2">{p.name}</div>
-                <div className="text-4xl font-black text-gray-900 mb-1">
+                <div className="font-semibold text-slate-500 text-sm mb-2">{p.name}</div>
+                <div className="text-4xl font-bold text-slate-900 mb-1 tracking-tight">
                   {p.price}
-                  <span className="text-base font-normal text-gray-400">/mo</span>
+                  <span className="text-base font-normal text-slate-400">/mo</span>
                 </div>
-                <div className="space-y-2 mt-4 text-sm text-gray-600 text-left">
-                  <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span> {p.leads}</div>
-                  <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span> {p.ai}</div>
-                  <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span> {p.emails}</div>
-                  <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span> Full CRM pipeline</div>
-                  <div className="flex items-center gap-2"><span className="text-green-500 font-bold">✓</span> Campaign automation</div>
+                <div className="space-y-2.5 mt-5 text-sm text-slate-600">
+                  {[p.leads, p.ai, p.emails, 'Full CRM pipeline', 'Campaign automation'].map((line) => (
+                    <div key={line} className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> {line}
+                    </div>
+                  ))}
                 </div>
                 <Link
                   href="/register"
-                  className={`block mt-6 py-2.5 font-semibold rounded-xl text-sm text-center transition-colors ${p.popular ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
+                  className={`block mt-6 py-2.5 font-semibold rounded-xl text-sm text-center transition-colors ${
+                    p.popular ? 'bg-brand-600 text-white hover:bg-brand-700' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+                  }`}
                 >
-                  Get Started
+                  Get started
                 </Link>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* CTA */}
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 py-20">
-        <div className="max-w-3xl mx-auto px-8 text-center">
-          <h2 className="text-4xl font-black text-white mb-4">Ready to supercharge your sales?</h2>
-          <p className="text-blue-100 text-lg mb-8">Join thousands of sales teams closing more deals with AI.</p>
-          <Link href="/register" className="inline-block px-10 py-4 bg-white text-blue-600 font-black rounded-xl text-lg hover:bg-blue-50 shadow-2xl transition-all">
-            Start Free — No Card Required
-          </Link>
+      <section className="px-6 sm:px-8 pb-24">
+        <div className="max-w-5xl mx-auto relative overflow-hidden rounded-3xl bg-slate-950 px-8 py-16 text-center">
+          <div
+            className="absolute inset-0"
+            style={{ background: 'radial-gradient(500px circle at 30% 0%, rgba(79,70,229,0.4), transparent 45%), radial-gradient(400px circle at 100% 100%, rgba(139,92,246,0.25), transparent 45%)' }}
+          />
+          <div className="relative">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">Ready to close more deals?</h2>
+            <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+              Join sales teams using AI to find, score and close their best-fit customers.
+            </p>
+            <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-colors">
+              Start free — no card required <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <footer className="py-8 text-center text-gray-400 text-sm border-t border-gray-100">
-        © 2025 AI Lead Gen SaaS. Built for modern sales teams.
+      <footer className="py-8 text-center text-slate-400 text-sm border-t border-slate-100">
+        © {new Date().getFullYear()} Pavion Technologies · Lead Intelligence
       </footer>
     </div>
   );

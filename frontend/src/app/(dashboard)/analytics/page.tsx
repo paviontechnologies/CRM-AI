@@ -31,13 +31,13 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'
 
 function KPICard({ title, value, subtitle, icon: Icon, color }: any) {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
         <Icon className="w-5 h-5 text-white" />
       </div>
-      <div className="text-2xl font-black text-gray-900">{value}</div>
-      <div className="text-sm font-medium text-gray-700 mt-0.5">{title}</div>
-      {subtitle && <div className="text-xs text-gray-400 mt-0.5">{subtitle}</div>}
+      <div className="text-2xl font-bold text-slate-900">{value}</div>
+      <div className="text-sm font-medium text-slate-700 mt-0.5">{title}</div>
+      {subtitle && <div className="text-xs text-slate-400 mt-0.5">{subtitle}</div>}
     </div>
   );
 }
@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -87,23 +87,23 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Analytics</h1>
-          <p className="text-gray-500 text-sm mt-1">Real-time performance insights across your entire pipeline</p>
+          <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
+          <p className="text-slate-500 text-sm mt-1">Real-time performance insights across your entire pipeline</p>
         </div>
       </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Total Leads" value={dashboard?.totalLeads ?? 0} subtitle={`+${dashboard?.thisWeekLeads ?? 0} this week`} icon={Users} color="bg-blue-600" />
+        <KPICard title="Total Leads" value={dashboard?.totalLeads ?? 0} subtitle={`+${dashboard?.thisWeekLeads ?? 0} this week`} icon={Users} color="bg-brand-600" />
         <KPICard title="Hot Leads" value={dashboard?.hotLeads ?? 0} subtitle="Score ≥ 80" icon={Zap} color="bg-orange-500" />
-        <KPICard title="Reply Rate" value={`${dashboard?.replyRate ?? 0}%`} subtitle="Across all campaigns" icon={MessageSquare} color="bg-indigo-600" />
+        <KPICard title="Reply Rate" value={`${dashboard?.replyRate ?? 0}%`} subtitle="Across all campaigns" icon={MessageSquare} color="bg-brand-600" />
         <KPICard title="Conversion" value={`${dashboard?.conversionRate ?? 0}%`} subtitle="Leads → Closed Won" icon={TrendingUp} color="bg-emerald-600" />
       </div>
 
       {/* Weekly trend + Source */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-gray-900 mb-5">Weekly Lead Acquisition</h3>
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <h3 className="font-bold text-slate-900 mb-5">Weekly Lead Acquisition</h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={weekly}>
               <defs>
@@ -121,8 +121,8 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-gray-900 mb-5">Leads by Source</h3>
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <h3 className="font-bold text-slate-900 mb-5">Leads by Source</h3>
           {source.length > 0 ? (
             <>
               <ResponsiveContainer width="100%" height={150}>
@@ -139,22 +139,22 @@ export default function AnalyticsPage() {
                 {source.slice(0, 5).map((s: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-gray-600 flex-1 capitalize truncate">{s.source || 'unknown'}</span>
-                    <span className="font-semibold text-gray-900">{s.count}</span>
+                    <span className="text-slate-600 flex-1 capitalize truncate">{s.source || 'unknown'}</span>
+                    <span className="font-semibold text-slate-900">{s.count}</span>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-40 text-gray-400 text-sm">No data</div>
+            <div className="flex items-center justify-center h-40 text-slate-400 text-sm">No data</div>
           )}
         </div>
       </div>
 
       {/* Industry + Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-gray-900 mb-5">Leads by Industry</h3>
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <h3 className="font-bold text-slate-900 mb-5">Leads by Industry</h3>
           {industry.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={industry}>
@@ -166,12 +166,12 @@ export default function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">No industry data</div>
+            <div className="flex items-center justify-center h-48 text-slate-400 text-sm">No industry data</div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h3 className="font-bold text-gray-900 mb-5">Pipeline Status Distribution</h3>
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <h3 className="font-bold text-slate-900 mb-5">Pipeline Status Distribution</h3>
           {status.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={status} layout="vertical">
@@ -183,50 +183,50 @@ export default function AnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">No status data</div>
+            <div className="flex items-center justify-center h-48 text-slate-400 text-sm">No status data</div>
           )}
         </div>
       </div>
 
       {/* Campaign Performance Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-blue-600" />
-          <h3 className="font-bold text-gray-900">Campaign Performance</h3>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-brand-600" />
+          <h3 className="font-bold text-slate-900">Campaign Performance</h3>
         </div>
         {campaigns.length === 0 ? (
-          <div className="py-12 text-center text-gray-400 text-sm">No campaign data yet</div>
+          <div className="py-12 text-center text-slate-400 text-sm">No campaign data yet</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Campaign</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Enrolled</th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Sent</th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Replies</th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Reply Rate</th>
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Campaign</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Enrolled</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Sent</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Replies</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Reply Rate</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-slate-50">
                 {campaigns.map((c: any) => {
                   const rate = c.sentCount > 0 ? Math.round((c.replyCount / c.sentCount) * 100) : 0;
                   return (
-                    <tr key={c.id} className="hover:bg-gray-50/50">
-                      <td className="px-5 py-3.5 font-semibold text-gray-900 text-sm">{c.name}</td>
+                    <tr key={c.id} className="hover:bg-slate-50/50">
+                      <td className="px-5 py-3.5 font-semibold text-slate-900 text-sm">{c.name}</td>
                       <td className="px-5 py-3.5">
                         <span className={`px-2 py-1 text-xs rounded-lg font-medium capitalize ${
                           c.status === 'active' ? 'bg-green-100 text-green-700' :
-                          c.status === 'draft' ? 'bg-gray-100 text-gray-600' :
-                          'bg-blue-100 text-blue-700'
+                          c.status === 'draft' ? 'bg-slate-100 text-slate-600' :
+                          'bg-brand-100 text-brand-700'
                         }`}>{c.status}</span>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 text-right">{c.enrolledCount || 0}</td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 text-right">{c.sentCount || 0}</td>
-                      <td className="px-5 py-3.5 text-sm text-gray-600 text-right">{c.replyCount || 0}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600 text-right">{c.enrolledCount || 0}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600 text-right">{c.sentCount || 0}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600 text-right">{c.replyCount || 0}</td>
                       <td className="px-5 py-3.5 text-right">
-                        <span className={`text-sm font-bold ${rate >= 15 ? 'text-green-600' : rate >= 5 ? 'text-yellow-600' : 'text-gray-500'}`}>
+                        <span className={`text-sm font-bold ${rate >= 15 ? 'text-green-600' : rate >= 5 ? 'text-yellow-600' : 'text-slate-500'}`}>
                           {rate}%
                         </span>
                       </td>
@@ -240,22 +240,22 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Activity Timeline */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-        <h3 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-blue-600" /> Activity Timeline
+      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+        <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
+          <Activity className="w-4 h-4 text-brand-600" /> Activity Timeline
         </h3>
         {activities.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-8">No activity recorded yet</p>
+          <p className="text-slate-400 text-sm text-center py-8">No activity recorded yet</p>
         ) : (
           <div className="space-y-3">
             {activities.slice(0, 10).map((a: any) => (
               <div key={a.id} className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800 font-medium">{a.type}</p>
-                  {a.notes && <p className="text-xs text-gray-400 mt-0.5">{a.notes}</p>}
+                  <p className="text-sm text-slate-800 font-medium">{a.type}</p>
+                  {a.notes && <p className="text-xs text-slate-400 mt-0.5">{a.notes}</p>}
                 </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">
+                <span className="text-xs text-slate-400 flex-shrink-0">
                   {new Date(a.createdAt).toLocaleDateString()}
                 </span>
               </div>

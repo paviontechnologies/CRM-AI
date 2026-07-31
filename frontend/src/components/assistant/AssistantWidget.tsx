@@ -98,7 +98,7 @@ export function AssistantWidget() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open AI assistant"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 pl-4 pr-5 py-3 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-900/30 hover:shadow-xl hover:scale-105 transition-all"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 pl-4 pr-5 py-3 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-full shadow-lg shadow-brand-900/30 hover:shadow-xl hover:scale-105 transition-all"
         >
           <Sparkles className="w-5 h-5" />
           <span className="text-sm font-semibold">Ask AI</span>
@@ -107,19 +107,19 @@ export function AssistantWidget() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-3rem)] sm:w-[400px] h-[600px] max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-[calc(100vw-3rem)] sm:w-[400px] h-[600px] max-h-[calc(100vh-3rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-br from-brand-500 to-brand-700 text-white flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
                 <p className="font-bold text-sm leading-none">AI Assistant</p>
-                <p className="text-xs text-blue-100 mt-0.5">Ask, or tell me what to do</p>
+                <p className="text-xs text-brand-100 mt-0.5">Ask, or tell me what to do</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-blue-100 hover:text-white transition-colors">
+            <button onClick={() => setOpen(false)} className="text-brand-100 hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -129,11 +129,11 @@ export function AssistantWidget() {
             {messages.length === 0 && (
               <div className="space-y-4">
                 <div className="text-center py-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Sparkles className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Sparkles className="w-6 h-6 text-brand-600" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">How can I help?</p>
-                  <p className="text-xs text-gray-500 mt-1 px-4">
+                  <p className="text-sm font-semibold text-slate-900">How can I help?</p>
+                  <p className="text-xs text-slate-500 mt-1 px-4">
                     I can search leads, score them, draft outreach, and create tasks or deals — just ask.
                   </p>
                 </div>
@@ -142,7 +142,7 @@ export function AssistantWidget() {
                     <button
                       key={s}
                       onClick={() => send(s)}
-                      className="w-full text-left px-3 py-2.5 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 rounded-xl text-sm text-gray-600 transition-colors"
+                      className="w-full text-left px-3 py-2.5 bg-slate-50 hover:bg-brand-50 hover:text-brand-700 rounded-xl text-sm text-slate-600 transition-colors"
                     >
                       {s}
                     </button>
@@ -157,10 +157,10 @@ export function AssistantWidget() {
                   <div
                     className={`px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
                       m.role === 'user'
-                        ? 'bg-blue-600 text-white rounded-br-sm'
+                        ? 'bg-brand-600 text-white rounded-br-sm'
                         : m.error
                           ? 'bg-red-50 text-red-700 border border-red-100 rounded-bl-sm'
-                          : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                          : 'bg-slate-100 text-slate-800 rounded-bl-sm'
                     }`}
                   >
                     {m.content}
@@ -191,7 +191,7 @@ export function AssistantWidget() {
                           {a.link && (
                             <button
                               onClick={() => goTo(a.link!)}
-                              className="flex-shrink-0 hover:text-blue-600 transition-colors"
+                              className="flex-shrink-0 hover:text-brand-600 transition-colors"
                               aria-label="Open"
                             >
                               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -207,17 +207,17 @@ export function AssistantWidget() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                  <span className="text-xs text-gray-400">Working on it…</span>
+                <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                  <span className="text-xs text-slate-400">Working on it…</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Composer */}
-          <div className="p-3 border-t border-gray-100 flex-shrink-0">
-            <div className="flex items-end gap-2 bg-gray-50 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+          <div className="p-3 border-t border-slate-100 flex-shrink-0">
+            <div className="flex items-end gap-2 bg-slate-50 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-brand-500">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -225,17 +225,17 @@ export function AssistantWidget() {
                 onKeyDown={onKeyDown}
                 rows={1}
                 placeholder="Message the assistant…"
-                className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none resize-none max-h-24 py-1"
+                className="flex-1 bg-transparent text-sm text-slate-800 focus:outline-none resize-none max-h-24 py-1"
               />
               <button
                 onClick={() => send(input)}
                 disabled={!input.trim() || loading}
-                className="flex-shrink-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-xl flex items-center justify-center transition-colors"
+                className="flex-shrink-0 w-8 h-8 bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white rounded-xl flex items-center justify-center transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] text-gray-400 text-center mt-1.5">
+            <p className="text-[10px] text-slate-400 text-center mt-1.5">
               The assistant can take real actions in your CRM.
             </p>
           </div>

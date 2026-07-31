@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Loader2, AlertCircle } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -30,86 +31,81 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-xl mb-4">
-            <span className="text-blue-600 font-black text-2xl">AI</span>
-          </div>
-          <h1 className="text-3xl font-black text-white">AI Lead Gen</h1>
-          <p className="text-blue-100 mt-1">Sign in to your workspace</p>
+    <div className="animate-fade-in-up">
+      {/* Mobile logo */}
+      <div className="lg:hidden flex items-center gap-2.5 mb-8">
+        <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center shadow-[var(--shadow-brand)]">
+          <span className="text-white font-bold text-sm">PT</span>
         </div>
-
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="you@company.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all disabled:opacity-60 shadow-lg shadow-blue-200"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('admin@demo.com');
-                setPassword('Demo1234!');
-              }}
-              className="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium py-3 px-4 rounded-xl transition-all text-sm border border-gray-200"
-            >
-              Try Demo Account
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            No account?{' '}
-            <Link href="/register" className="text-blue-600 font-semibold hover:underline">
-              Create workspace
-            </Link>
-          </p>
-        </div>
+        <span className="font-semibold text-slate-900">Pavion Technologies</span>
       </div>
+
+      <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome back</h1>
+      <p className="text-slate-500 text-sm mt-1.5">Sign in to your workspace to continue.</p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="surface-input"
+            placeholder="you@company.com"
+          />
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-sm font-medium text-slate-700">Password</label>
+            <button type="button" className="text-xs text-brand-600 font-medium hover:text-brand-700">
+              Forgot?
+            </button>
+          </div>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="surface-input"
+            placeholder="••••••••"
+          />
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-100 text-red-700 px-3.5 py-2.5 rounded-xl text-sm">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-11 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-60 shadow-[var(--shadow-brand)] flex items-center justify-center gap-2"
+        >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setEmail('admin@demo.com');
+            setPassword('Demo1234!');
+          }}
+          className="w-full h-11 bg-slate-50 hover:bg-slate-100 text-slate-600 font-medium rounded-xl transition-colors text-sm border border-slate-200"
+        >
+          Use demo account
+        </button>
+      </form>
+
+      <p className="text-center text-sm text-slate-500 mt-8">
+        New to Pavion?{' '}
+        <Link href="/register" className="text-brand-600 font-semibold hover:text-brand-700">
+          Create a workspace
+        </Link>
+      </p>
     </div>
   );
 }

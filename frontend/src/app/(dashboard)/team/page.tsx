@@ -22,12 +22,12 @@ type RoleType = typeof ROLES[number];
 function RoleBadge({ role }: { role: string }) {
   const map: Record<string, string> = {
     SUPERADMIN: 'bg-purple-100 text-purple-700',
-    ADMIN: 'bg-blue-100 text-blue-700',
+    ADMIN: 'bg-brand-100 text-brand-700',
     MANAGER: 'bg-green-100 text-green-700',
-    AGENT: 'bg-gray-100 text-gray-600',
+    AGENT: 'bg-slate-100 text-slate-600',
   };
   return (
-    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${map[role] || 'bg-gray-100 text-gray-600'}`}>
+    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${map[role] || 'bg-slate-100 text-slate-600'}`}>
       {role}
     </span>
   );
@@ -63,35 +63,35 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h3 className="font-bold text-gray-900">Invite Team Member</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <h3 className="font-bold text-slate-900">Invite Team Member</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
             <input
               required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="colleague@company.com"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Role</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as RoleType)}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
             >
               {ROLES.map((r) => (
                 <option key={r} value={r}>{r}</option>
               ))}
             </select>
-            <p className="text-xs text-gray-400 mt-1.5">
+            <p className="text-xs text-slate-400 mt-1.5">
               {role === 'ADMIN' && 'Full access to all features including billing and team management.'}
               {role === 'MANAGER' && 'Can manage leads, campaigns and view analytics. Cannot change billing.'}
               {role === 'AGENT' && 'Can view and update leads and campaigns. Limited access.'}
@@ -103,14 +103,14 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -186,12 +186,12 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Team</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your workspace members and permissions</p>
+          <h1 className="text-2xl font-bold text-slate-900">Team</h1>
+          <p className="text-slate-500 text-sm mt-1">Manage your workspace members and permissions</p>
         </div>
         <button
           onClick={() => setShowInvite(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-blue-200"
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-brand-200"
         >
           <UserPlus className="w-4 h-4" />
           Invite Member
@@ -208,33 +208,33 @@ export default function TeamPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total Members', value: members.length, color: 'text-gray-900' },
-          { label: 'Admins', value: members.filter(m => m.role === 'ADMIN' || m.role === 'SUPERADMIN').length, color: 'text-blue-600' },
-          { label: 'Agents', value: members.filter(m => m.role === 'AGENT').length, color: 'text-gray-600' },
+          { label: 'Total Members', value: members.length, color: 'text-slate-900' },
+          { label: 'Admins', value: members.filter(m => m.role === 'ADMIN' || m.role === 'SUPERADMIN').length, color: 'text-brand-600' },
+          { label: 'Agents', value: members.filter(m => m.role === 'AGENT').length, color: 'text-slate-600' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
-            <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-gray-400 mt-1">{s.label}</div>
+          <div key={s.label} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
+            <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+            <div className="text-xs text-slate-400 mt-1">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Team Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : members.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-6 h-6 text-gray-400" />
+            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-6 h-6 text-slate-400" />
             </div>
-            <p className="text-gray-700 font-semibold">No team members yet</p>
-            <p className="text-gray-400 text-sm mt-1 mb-6">Invite colleagues to collaborate on leads and campaigns</p>
+            <p className="text-slate-700 font-semibold">No team members yet</p>
+            <p className="text-slate-400 text-sm mt-1 mb-6">Invite colleagues to collaborate on leads and campaigns</p>
             <button
               onClick={() => setShowInvite(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors"
+              className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors"
             >
               Invite First Member
             </button>
@@ -242,28 +242,28 @@ export default function TeamPage() {
         ) : (
           <table className="min-w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Member</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Joined</th>
-                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">Member</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">Email</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">Role</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">Joined</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-50">
               {members.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50/50 group transition-colors">
+                <tr key={member.id} className="hover:bg-slate-50/50 group transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+                      <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
                         {member.user?.name?.charAt(0)?.toUpperCase() || member.user?.email?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{member.user?.name || '—'}</p>
+                        <p className="text-sm font-semibold text-slate-900">{member.user?.name || '—'}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-sm text-gray-600">{member.user?.email}</td>
+                  <td className="px-5 py-4 text-sm text-slate-600">{member.user?.email}</td>
                   <td className="px-5 py-4">
                     {member.role === 'SUPERADMIN' ? (
                       <RoleBadge role={member.role} />
@@ -273,19 +273,19 @@ export default function TeamPage() {
                           value={member.role}
                           onChange={(e) => handleRoleChange(member.id, e.target.value)}
                           disabled={roleChanging === member.id}
-                          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-60"
                         >
                           {ROLES.map((r) => (
                             <option key={r} value={r}>{r}</option>
                           ))}
                         </select>
                         {roleChanging === member.id && (
-                          <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-3.5 h-3.5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
                         )}
                       </div>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-sm text-gray-400">
+                  <td className="px-5 py-4 text-sm text-slate-400">
                     {member.joinedAt || member.createdAt
                       ? new Date(member.joinedAt || member.createdAt || '').toLocaleDateString()
                       : '—'}
