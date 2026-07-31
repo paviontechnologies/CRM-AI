@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma';
 import { sendCampaignEmail, isEmailConfigured } from './email.service';
 import { logActivity } from '../lib/notify';
+import { remainingQuota } from '../middleware/planLimit.middleware';
 
 const TICK_MS = parseInt(process.env.CAMPAIGN_TICK_MS || '', 10) || 60_000;
 /** How long one "day" of a sequence lasts. Lower it to smoke-test sequences fast. */
@@ -33,7 +34,9 @@ const processEnrollment = async (enrollment: any): Promise<void> => {
 
   // Only email is wired for delivery today; other channels are logged as drafts
   // so the sequence still advances and the work is visible on the timeline.
-  const canSend = step.channel === 'email' && Boolean(lead.email);
+  // Also stop sending once the org has burned through its email quota.
+  const withinQuota = (await remainingQuota(campaign.organizationId, 'email')) >= 1;
+  const canSend = step.channel === 'email' && Boolean(lead.email) && withinQuota;
 
   const subject = render(step.subject || `Following up, ${lead.companyName}`, lead);
   const body = render(step.content, lead);

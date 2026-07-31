@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { AssistantWidget } from '@/components/assistant/AssistantWidget';
 import { useAuthStore } from '@/store/auth.store';
 import { Search } from 'lucide-react';
 import api from '@/lib/api';
@@ -61,6 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+      <AssistantWidget />
     </div>
   );
 }

@@ -17,6 +17,7 @@ Built for [Pavion Technologies](https://paviontechnologies.com).
 - [Project structure](#project-structure)
 - [API reference](#api-reference)
 - [Data model](#data-model)
+- [The AI assistant](#the-ai-assistant)
 - [How the campaign engine works](#how-the-campaign-engine-works)
 - [Deployment](#deployment)
 - [Known gaps](#known-gaps)
@@ -24,6 +25,19 @@ Built for [Pavion Technologies](https://paviontechnologies.com).
 ---
 
 ## Features
+
+### AI assistant (agentic)
+A floating assistant available on every page that doesn't just answer questions — it **takes
+actions in the CRM** through Claude tool-use. Ask it in plain language:
+
+> *"Score the Apollo Hospitals lead and add a follow-up task for tomorrow"*
+> *"Create a deal worth ₹4L for CloudBase and move it to Proposal Sent"*
+> *"Which leads haven't been contacted this week?"*
+
+It can search and read leads, create leads, score them, draft outreach, add notes, create and
+complete tasks, create and move deals, and summarize the pipeline and analytics — chaining tools
+when a request needs several steps. Every action is scoped to the caller's organization and gated
+by their role (a `VIEWER` gets read-only). See [The AI assistant](#the-ai-assistant).
 
 ### Lead intelligence
 - **AI lead generation** — describe an industry and city; Claude drafts a batch of matching
@@ -295,6 +309,15 @@ Base URL: `/api`. All routes require `Authorization: Bearer <token>` unless mark
 </details>
 
 <details>
+<summary><b>AI assistant</b> — <code>/api/assistant</code></summary>
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/chat` | Send the conversation (`{ messages: [{role, content}] }`); returns `{ reply, actions[] }`. The server runs the Claude tool-use loop and executes any actions org-scoped. Rate-limited. |
+
+</details>
+
+<details>
 <summary><b>Tasks, Notes, Attachments, Notifications</b></summary>
 
 | Method | Path | Description |
@@ -367,6 +390,41 @@ body.
 
 ---
 
+## The AI assistant
+
+The assistant is an agentic layer over the CRM, implemented with Claude tool-use.
+
+**Where it lives**
+- `src/services/assistant.tools.ts` — the tool registry: an Anthropic tool schema plus a handler
+  for each. Handlers talk to Prisma directly and are always scoped to `ctx.orgId`.
+- `src/services/assistant.service.ts` — the agentic loop.
+- `src/controllers/assistant.controller.ts` + `POST /api/assistant/chat`.
+- Frontend: `components/assistant/AssistantWidget.tsx`, mounted in the dashboard layout.
+
+**How a request flows**
+1. The widget sends the running conversation as plain `{ role, content }` turns.
+2. The service calls Claude with the tool definitions. While the model returns `stop_reason:
+   "tool_use"`, the server executes each requested tool, appends the results, and lets the model
+   continue — up to `MAX_TURNS` (6) rounds.
+3. The final natural-language reply is returned along with a structured `actions[]` list, which the
+   UI renders as green/amber chips with deep links to what changed.
+
+**Available tools**
+
+| Read | Write |
+| --- | --- |
+| `search_leads`, `get_lead_details`, `list_tasks`, `get_pipeline_summary`, `get_analytics_summary` | `create_lead`, `update_lead_status`, `score_lead`, `draft_outreach`, `add_note`, `create_task`, `complete_task`, `create_deal`, `move_deal` |
+
+**Guardrails**
+- Every tool filters on the caller's `organizationId` — the assistant can never touch another
+  tenant's data.
+- Write tools are blocked for the `VIEWER` role.
+- Leads/deals/tasks can be referenced by name; the tools resolve them, and the model is instructed
+  to ask rather than guess when a reference is ambiguous.
+- AI actions increment the org's usage counters, same as the REST endpoints.
+- Without `ANTHROPIC_API_KEY`, the assistant returns a clear "not configured" message instead of
+  failing.
+
 ## How the campaign engine works
 
 `src/services/campaign.scheduler.ts` boots with the server and runs on an interval.
@@ -424,17 +482,17 @@ Production checklist:
 
 Being upfront about what is not done yet:
 
-- **Plan limits are not enforced.** `leadLimit`, `aiLimit` and friends are stored and displayed,
-  but nothing blocks an org from exceeding them.
-- **No rate limiting.** The login endpoint in particular should be throttled before this is
-  publicly exposed.
 - **No automated tests** and no CI pipeline.
 - **Reply tracking is not wired.** `replyCount` stays at zero — it needs inbound email handling
   (IMAP polling or an inbound webhook). Open tracking does work.
 - **WhatsApp / LinkedIn / SMS steps are recorded but not delivered.** Only email actually sends.
 - **Attachments are stored on local disk**, which does not survive horizontal scaling or most
-  container restarts.
+  container restarts. Move to S3 (or similar) for multi-instance deploys.
 - **No structured logging or request IDs** — `morgan` only.
+
+Already handled: rate limiting (auth, AI and global limiters), plan-limit enforcement on
+lead/AI/email actions, raw-body Stripe webhook verification, graceful shutdown, and startup env
+validation.
 
 ---
 
