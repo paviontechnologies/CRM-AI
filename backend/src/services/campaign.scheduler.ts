@@ -1,14 +1,12 @@
 import { prisma } from '../lib/prisma';
+import { getEnv } from '../lib/context';
 import { sendCampaignEmail, isEmailConfigured } from './email.service';
 import { logActivity } from '../lib/notify';
 import { remainingQuota } from '../middleware/planLimit.middleware';
 
-const TICK_MS = parseInt(process.env.CAMPAIGN_TICK_MS || '', 10) || 60_000;
 /** How long one "day" of a sequence lasts. Lower it to smoke-test sequences fast. */
-const DAY_MS = parseInt(process.env.CAMPAIGN_DAY_MS || '', 10) || 86_400_000;
-const BATCH_SIZE = parseInt(process.env.CAMPAIGN_BATCH_SIZE || '', 10) || 25;
-
-let running = false;
+const DEFAULT_DAY_MS = 86_400_000;
+const DEFAULT_BATCH_SIZE = 25;
 
 /** Replace {{token}} placeholders with lead fields. Unknown tokens collapse to ''. */
 const render = (template: string, lead: Record<string, any>): string =>
@@ -17,7 +15,7 @@ const render = (template: string, lead: Record<string, any>): string =>
     return value === null || value === undefined ? '' : String(value);
   });
 
-const processEnrollment = async (enrollment: any): Promise<void> => {
+const processEnrollment = async (enrollment: any, dayMs: number): Promise<void> => {
   const { campaign, lead } = enrollment;
   const steps = campaign.steps;
 
@@ -26,6 +24,19 @@ const processEnrollment = async (enrollment: any): Promise<void> => {
     await prisma.campaignEnrollment.update({
       where: { id: enrollment.id },
       data: { status: 'completed', nextRunAt: null }
+    });
+    return;
+  }
+
+  // A reply may have landed since this enrollment was queued — never drip on top of one.
+  const replied = await prisma.message.findFirst({
+    where: { leadId: lead.id, direction: 'inbound', campaignId: campaign.id },
+    select: { id: true }
+  });
+  if (replied) {
+    await prisma.campaignEnrollment.update({
+      where: { id: enrollment.id },
+      data: { status: 'replied', nextRunAt: null }
     });
     return;
   }
@@ -96,15 +107,28 @@ const processEnrollment = async (enrollment: any): Promise<void> => {
     data: {
       currentStep: nextStepIndex,
       status: nextStep ? 'active' : 'completed',
-      nextRunAt: nextStep ? new Date(Date.now() + (nextStep.dayOffset || 1) * DAY_MS) : null
+      nextRunAt: nextStep ? new Date(Date.now() + (nextStep.dayOffset || 1) * dayMs) : null
     }
   });
 };
 
-const tick = async (): Promise<void> => {
-  // Guard against overlapping runs when a batch takes longer than one tick.
-  if (running) return;
-  running = true;
+/**
+ * Process one batch of due enrollments.
+ *
+ * Called from the Worker's `scheduled` handler rather than a setInterval — a
+ * Worker isolate does not outlive its request, so the platform's cron trigger
+ * is what keeps sequences moving. Claiming rows before sending means two
+ * overlapping ticks can't both pick up the same enrollment.
+ */
+export const runCampaignTick = async (): Promise<void> => {
+  const env = getEnv();
+  if (env.CAMPAIGN_SCHEDULER === 'off') {
+    console.log('[campaigns] scheduler disabled via CAMPAIGN_SCHEDULER=off');
+    return;
+  }
+
+  const dayMs = parseInt(env.CAMPAIGN_DAY_MS || '', 10) || DEFAULT_DAY_MS;
+  const batchSize = parseInt(env.CAMPAIGN_BATCH_SIZE || '', 10) || DEFAULT_BATCH_SIZE;
 
   try {
     const due = await prisma.campaignEnrollment.findMany({
@@ -114,7 +138,7 @@ const tick = async (): Promise<void> => {
         // Paused or draft campaigns must not send.
         campaign: { status: 'active' }
       },
-      take: BATCH_SIZE,
+      take: batchSize,
       orderBy: { nextRunAt: 'asc' },
       include: {
         lead: true,
@@ -123,43 +147,34 @@ const tick = async (): Promise<void> => {
     });
 
     if (due.length === 0) return;
+
+    // Claim the batch so a slow tick overlapping the next one cannot double-send.
+    // Only rows still due are claimed; anything another tick already took is skipped.
+    const { count } = await prisma.campaignEnrollment.updateMany({
+      where: { id: { in: due.map((e) => e.id) }, status: 'active', nextRunAt: { lte: new Date() } },
+      data: { status: 'processing' }
+    });
+    if (count === 0) return;
+
     console.log(`[campaigns] processing ${due.length} due enrollment(s)`);
 
     for (const enrollment of due) {
       try {
-        await processEnrollment(enrollment);
+        await processEnrollment(enrollment, dayMs);
       } catch (error) {
         console.error(`[campaigns] enrollment ${enrollment.id} failed:`, error);
         // Back off this one enrollment so a persistent failure doesn't spin the loop.
         await prisma.campaignEnrollment
           .update({
             where: { id: enrollment.id },
-            data: { nextRunAt: new Date(Date.now() + 15 * 60_000) }
+            data: { status: 'active', nextRunAt: new Date(Date.now() + 15 * 60_000) }
           })
           .catch(() => undefined);
       }
     }
   } catch (error) {
     console.error('[campaigns] scheduler tick failed:', error);
-  } finally {
-    running = false;
   }
 };
 
-export const startCampaignScheduler = (): void => {
-  if (process.env.CAMPAIGN_SCHEDULER === 'off') {
-    console.log('[campaigns] scheduler disabled via CAMPAIGN_SCHEDULER=off');
-    return;
-  }
-
-  console.log(
-    `[campaigns] scheduler started — tick ${TICK_MS}ms, day ${DAY_MS}ms, sending ${
-      isEmailConfigured() ? 'ENABLED' : 'DISABLED (no SMTP config)'
-    }`
-  );
-
-  const timer = setInterval(tick, TICK_MS);
-  // Don't hold the event loop open during shutdown.
-  timer.unref();
-  void tick();
-};
+export { isEmailConfigured };

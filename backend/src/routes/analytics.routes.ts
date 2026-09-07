@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getDashboardStats,
   getLeadsBySource,
@@ -9,10 +9,11 @@ import {
   getWeeklyLeads
 } from '../controllers/analytics.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
-router.use(authenticate);
+router.use('*', authenticate);
 router.get('/dashboard', getDashboardStats);
 router.get('/leads/source', getLeadsBySource);
 router.get('/leads/status', getLeadsByStatus);

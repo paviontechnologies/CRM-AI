@@ -1,18 +1,18 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
-  upload,
   getAttachments,
   uploadAttachment,
   downloadAttachment,
   deleteAttachment
 } from '../controllers/attachments.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
-router.use(authenticate);
+router.use('*', authenticate);
 router.get('/', getAttachments);
-router.post('/', upload.single('file'), uploadAttachment);
+router.post('/', uploadAttachment);
 router.get('/:id/download', downloadAttachment);
 router.delete('/:id', deleteAttachment);
 

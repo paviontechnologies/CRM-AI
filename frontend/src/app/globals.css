@@ -1,52 +1,231 @@
 @import "tailwindcss";
 
 /* ─── Design tokens ──────────────────────────────────────────────────────────
-   A single, restrained system: one accent (indigo), slate-tinted neutrals,
-   soft layered shadows. Everything reads as one product. */
+   Monochrome, editorial. One ink, one paper, a hairline between them.
+
+   The neutrals carry a trace of warmth (a hint of yellow in the greys) rather
+   than the usual blue-tinted slate — pure grey photographs as "unstyled", and
+   the warmth is what makes a black-and-white palette read as a chosen thing.
+
+   Every colour is a variable so the theme can be swapped at runtime: Tailwind
+   emits var(--color-*) inside its utilities, so overriding a variable under a
+   dark selector re-themes markup that was never touched. */
 
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  /* Brand accent — indigo */
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-300: #a5b4fc;
-  --color-brand-400: #818cf8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-800: #3730a3;
-  --color-brand-900: #312e81;
+  /* Semantic surfaces — what components should reach for. */
+  --color-canvas: #fbfbfa;   /* page ground */
+  --color-surface: #ffffff;  /* raised panel */
+  --color-subtle: #f4f4f2;   /* inset / hover fill */
+  --color-line: #e4e4e1;     /* hairline */
+  --color-ink: #111110;      /* primary text */
+  --color-muted: #6b6b66;    /* secondary text */
+  --color-faint: #9a9a93;    /* tertiary text, placeholders */
 
-  /* Neutral canvas / surfaces */
-  --color-canvas: #f7f8fa;
-  --color-surface: #ffffff;
+  /* Deep jade: the one colour in the system. It carries actions, links and
+     data emphasis. Chosen against the warm neutrals — and deliberately not the
+     indigo/violet that every generated dashboard reaches for. */
+  --color-accent: #0b7052;
+  --color-onaccent: #ffffff;
+  --color-accent-soft: #e8f4ef;
+  --color-accent-line: #bfe0d3;
+  --color-accent-hi: #0e8a63;
+  --color-accent-alt: #0e7490;   /* backdrop only — a cooler counterpoint */
 
-  /* Soft, layered shadows — the "expensive" depth */
-  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
-  --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px -4px rgb(15 23 42 / 0.08);
-  --shadow-elevated: 0 4px 8px -2px rgb(15 23 42 / 0.06), 0 12px 32px -8px rgb(15 23 42 / 0.14);
-  --shadow-brand: 0 4px 14px -2px rgb(79 70 229 / 0.35);
+  /* The ink pair, for large panels that should stay neutral rather than green. */
+  --color-field: #111110;
+  --color-onfield: #ffffff;
 
-  --radius-lg: 0.625rem;
-  --radius-xl: 0.875rem;
-  --radius-2xl: 1.125rem;
+  /* Legacy brand ramp remapped onto the neutral scale. Keeps the ~50 existing
+     brand-* utilities working while the palette turns monochrome. */
+  --color-brand-50: #e8f4ef;
+  --color-brand-100: #d3ebe1;
+  --color-brand-200: #bfe0d3;
+  --color-brand-300: #8fcbb2;
+  --color-brand-400: #4fae8b;
+  --color-brand-500: #0e8a63;
+  --color-brand-600: #0b7052;
+  --color-brand-700: #095a43;
+  --color-brand-800: #074534;
+  --color-brand-900: #05372a;
+
+  /* Depth comes from hairlines; shadows only lift what truly floats. */
+  --shadow-xs: 0 1px 1px 0 rgb(0 0 0 / 0.03);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 2px 4px -1px rgb(0 0 0 / 0.06), 0 12px 28px -8px rgb(0 0 0 / 0.18);
+  --shadow-brand: none;
+
+  /* Tighter than the usual pill radii — precision reads as craft. */
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+}
+
+/* ─── Theme ──────────────────────────────────────────────────────────────────
+   Light is declared on bare :root so no colour exists only inside a media
+   query. Dark is declared twice — once for the system preference (unless the
+   user explicitly chose light) and once for an explicit choice — so the toggle
+   wins in both directions. */
+
+/* These are deliberately NOT inside `@layer theme` — Tailwind v4 owns that
+   layer and replaces its contents with the generated variables, which silently
+   dropped these overrides. Unlayered rules also outrank layered ones, which is
+   exactly what an override wants. */
+
+
+:root {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --color-canvas: #0a0a09;
+    --color-surface: #131312;
+    --color-subtle: #1c1c1a;
+    --color-line: #292927;
+    --color-ink: #f4f4f1;
+    --color-muted: #a0a099;
+    --color-faint: #6e6e68;
+
+    --color-accent: #3fcf98;
+    --color-onaccent: #05231a;
+    --color-accent-soft: #102a22;
+    --color-accent-line: #1d4438;
+    --color-accent-hi: #5adcaa;
+    --color-accent-alt: #22d3ee;
+
+    --color-field: #f4f4f1;
+    --color-onfield: #0a0a09;
+
+    --color-brand-50: #102a22;
+    --color-brand-100: #16382d;
+    --color-brand-200: #1d4438;
+    --color-brand-300: #2a6b56;
+    --color-brand-400: #2f9d76;
+    --color-brand-500: #3fcf98;
+    --color-brand-600: #3fcf98;
+    --color-brand-700: #5adcaa;
+    --color-brand-800: #7fe7c0;
+    --color-brand-900: #a5f0d4;
+
+    /* Safety net: any slate-* utility left in the markup inverts with the
+       theme instead of staying stuck on a light value. */
+    --color-slate-50: #131312;
+    --color-slate-100: #1c1c1a;
+    --color-slate-200: #292927;
+    --color-slate-300: #3a3a37;
+    --color-slate-400: #6e6e68;
+    --color-slate-500: #a0a099;
+    --color-slate-600: #b8b8b1;
+    --color-slate-700: #d4d4ce;
+    --color-slate-800: #e8e8e3;
+    --color-slate-900: #f4f4f1;
+
+    --color-red-50: #2a1512;
+    --color-red-100: #3a1c18;
+    --color-red-200: #4d2420;
+    --color-red-600: #f87171;
+    --color-red-700: #fca5a5;
+    --color-emerald-50: #0e2a1f;
+    --color-emerald-100: #143a2b;
+    --color-emerald-500: #34d399;
+    --color-emerald-600: #6ee7b7;
+    --color-emerald-700: #a7f3d0;
+    --color-amber-50: #2b2010;
+    --color-amber-100: #3a2c15;
+    --color-amber-200: #4a3a1c;
+    --color-amber-500: #fbbf24;
+    --color-amber-700: #fcd34d;
+    --color-amber-800: #fde68a;
+    --color-blue-50: #12203a;
+    --color-blue-100: #1a2b4d;
+    --color-blue-600: #93c5fd;
+    --color-blue-700: #bfdbfe;
+    --color-purple-50: #221a35;
+    --color-purple-100: #2d2245;
+    --color-purple-600: #c4b5fd;
+    --color-purple-700: #ddd6fe;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-canvas: #0a0a09;
+  --color-surface: #131312;
+  --color-subtle: #1c1c1a;
+  --color-line: #292927;
+  --color-ink: #f4f4f1;
+  --color-muted: #a0a099;
+  --color-faint: #6e6e68;
+
+  --color-accent: #3fcf98;
+  --color-onaccent: #05231a;
+  --color-accent-soft: #102a22;
+  --color-accent-line: #1d4438;
+  --color-accent-hi: #5adcaa;
+  --color-accent-alt: #22d3ee;
+
+  --color-field: #f4f4f1;
+  --color-onfield: #0a0a09;
+
+  --color-brand-50: #102a22;
+  --color-brand-100: #16382d;
+  --color-brand-200: #1d4438;
+  --color-brand-300: #2a6b56;
+  --color-brand-400: #2f9d76;
+  --color-brand-500: #3fcf98;
+  --color-brand-600: #3fcf98;
+  --color-brand-700: #5adcaa;
+  --color-brand-800: #7fe7c0;
+  --color-brand-900: #a5f0d4;
+
+  --color-slate-50: #131312;
+  --color-slate-100: #1c1c1a;
+  --color-slate-200: #292927;
+  --color-slate-300: #3a3a37;
+  --color-slate-400: #6e6e68;
+  --color-slate-500: #a0a099;
+  --color-slate-600: #b8b8b1;
+  --color-slate-700: #d4d4ce;
+  --color-slate-800: #e8e8e3;
+  --color-slate-900: #f4f4f1;
+
+  --color-red-50: #2a1512;
+  --color-red-100: #3a1c18;
+  --color-red-200: #4d2420;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-emerald-50: #0e2a1f;
+  --color-emerald-100: #143a2b;
+  --color-emerald-500: #34d399;
+  --color-emerald-600: #6ee7b7;
+  --color-emerald-700: #a7f3d0;
+  --color-amber-50: #2b2010;
+  --color-amber-100: #3a2c15;
+  --color-amber-200: #4a3a1c;
+  --color-amber-500: #fbbf24;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+  --color-blue-50: #12203a;
+  --color-blue-100: #1a2b4d;
+  --color-blue-600: #93c5fd;
+  --color-blue-700: #bfdbfe;
+  --color-purple-50: #221a35;
+  --color-purple-100: #2d2245;
+  --color-purple-600: #c4b5fd;
+  --color-purple-700: #ddd6fe;
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
 
-:root {
-  color-scheme: light; /* the app is light-first; don't let the OS invert it */
-  --border: #e2e8f0;        /* slate-200 */
-  --muted: #64748b;         /* slate-500 */
-  --ink: #0f172a;           /* slate-900 */
-}
-
 * {
-  border-color: var(--border);
+  border-color: var(--color-line);
 }
 
 html {
@@ -55,7 +234,7 @@ html {
 
 body {
   background: var(--color-canvas);
-  color: var(--ink);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -63,77 +242,76 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Headings breathe with slightly tighter tracking */
+/* Display type earns its size through tracking, not weight alone. */
 h1, h2, h3, h4 {
-  letter-spacing: -0.014em;
+  letter-spacing: -0.02em;
+}
+h1 {
+  letter-spacing: -0.032em;
 }
 
-/* Refined focus — visible for keyboard users, quiet for mouse */
 :focus-visible {
-  outline: 2px solid var(--color-brand-500);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 :focus:not(:focus-visible) {
   outline: none;
 }
 
 ::selection {
-  background: var(--color-brand-100);
-  color: var(--color-brand-900);
+  background: var(--color-ink);
+  color: var(--color-canvas);
 }
 
-/* Slim, unobtrusive scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--color-line) transparent;
 }
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--color-line);
   border-radius: 9999px;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
   background-clip: content-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-faint);
   background-clip: content-box;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* ─── Component classes ──────────────────────────────────────────────────────
-   Shared primitives so every page composes from the same parts. */
+/* ─── Component classes ─────────────────────────────────────────────────── */
 
 @layer components {
   .card {
     background: var(--color-surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--color-line);
     border-radius: var(--radius-2xl);
-    box-shadow: var(--shadow-card);
   }
 
   .surface-input {
     width: 100%;
-    border: 1px solid var(--border);
+    border: 1px solid var(--color-line);
     border-radius: var(--radius-xl);
     background: var(--color-surface);
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
-    color: var(--ink);
+    color: var(--color-ink);
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   .surface-input::placeholder {
-    color: #94a3b8;
+    color: var(--color-faint);
   }
   .surface-input:focus {
     outline: none;
-    border-color: var(--color-brand-500);
-    box-shadow: 0 0 0 3px var(--color-brand-100);
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px var(--color-subtle);
   }
 
   .btn {
@@ -144,60 +322,108 @@ h1, h2, h3, h4 {
     border-radius: var(--radius-xl);
     padding: 0.625rem 1rem;
     font-size: 0.875rem;
-    font-weight: 600;
-    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, opacity 0.15s;
+    font-weight: 550;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
     cursor: pointer;
     white-space: nowrap;
   }
   .btn:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
   }
   .btn-primary {
-    background: var(--color-brand-600);
-    color: #fff;
-    box-shadow: var(--shadow-brand);
+    background: var(--color-accent);
+    color: var(--color-onaccent);
   }
   .btn-primary:hover:not(:disabled) {
-    background: var(--color-brand-700);
+    opacity: 0.85;
   }
   .btn-secondary {
     background: var(--color-surface);
-    color: #334155;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-xs);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
   }
   .btn-secondary:hover:not(:disabled) {
-    background: #f8fafc;
-    color: #0f172a;
+    background: var(--color-subtle);
   }
   .btn-ghost {
     background: transparent;
-    color: #475569;
+    color: var(--color-muted);
   }
   .btn-ghost:hover:not(:disabled) {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--color-subtle);
+    color: var(--color-ink);
   }
 
-  /* Animated skeleton shimmer for loading states */
   .skeleton {
-    background: linear-gradient(100deg, #f1f5f9 30%, #e2e8f0 50%, #f1f5f9 70%);
+    background: linear-gradient(100deg, var(--color-subtle) 30%, var(--color-line) 50%, var(--color-subtle) 70%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.4s ease-in-out infinite;
-    border-radius: 0.5rem;
+    border-radius: 0.375rem;
   }
   @keyframes skeleton-shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
+
+  /* A rule that fades at both ends — separates sections without the hard stop
+     of a full-width border. */
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-line) 15%, var(--color-line) 85%, transparent);
+  }
 }
 
-/* Entrance animation for panels/toasts */
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up {
   animation: fade-in-up 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Ambient backdrop ───────────────────────────────────────────────────────
+   Drifting colour fields behind the hero. Long, deliberately unequal durations
+   so the three blobs never visibly sync up and start looping together. */
+
+@keyframes drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(6%, -4%, 0) scale(1.12); }
+  66%      { transform: translate3d(-4%, 5%, 0) scale(0.94); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  40%      { transform: translate3d(-7%, 5%, 0) scale(1.15); }
+  75%      { transform: translate3d(5%, -3%, 0) scale(0.9); }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%      { transform: translate3d(4%, 6%, 0) scale(0.92); }
+}
+
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  will-change: transform;
+}
+.aurora-a { animation: drift-a 26s ease-in-out infinite; }
+.aurora-b { animation: drift-b 31s ease-in-out infinite; }
+.aurora-c { animation: drift-c 37s ease-in-out infinite; }
+
+/* Engineering-paper grid, masked so it fades out instead of ending on an edge. */
+.grid-field {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(70% 60% at 50% 30%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000 30%, transparent 75%);
 }

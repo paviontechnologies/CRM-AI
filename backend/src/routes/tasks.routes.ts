@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getTasks,
   getTask,
@@ -8,10 +8,11 @@ import {
   deleteTask
 } from '../controllers/tasks.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
-router.use(authenticate);
+router.use('*', authenticate);
 router.get('/', getTasks);
 router.post('/', createTask);
 router.get('/:id', getTask);

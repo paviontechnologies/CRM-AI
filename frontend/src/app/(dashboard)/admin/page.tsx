@@ -12,12 +12,12 @@ interface Template { id: string; name: string; niche: string; channel: string; s
 
 function StatCard({ icon: Icon, title, value, color }: any) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${color}`}>
-        <Icon className="w-5 h-5 text-white" />
+    <div className="bg-surface rounded-2xl border border-line shadow-sm p-5">
+      <div className="w-9 h-9 rounded-lg border border-line flex items-center justify-center mb-4">
+        <Icon className="w-4 h-4 text-faint" />
       </div>
-      <div className="text-2xl font-bold text-slate-900">{value?.toLocaleString() ?? 0}</div>
-      <div className="text-sm text-slate-500 mt-0.5">{title}</div>
+      <div className="text-2xl font-semibold text-ink">{value?.toLocaleString() ?? 0}</div>
+      <div className="text-sm text-muted mt-0.5">{title}</div>
     </div>
   );
 }
@@ -96,20 +96,20 @@ export default function AdminPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
-          <Shield className="w-5 h-5 text-white" />
+          <Shield className="w-5 h-5 text-onaccent" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin Panel</h1>
-          <p className="text-slate-500 text-sm">System management and monitoring</p>
+          <h1 className="text-2xl font-semibold text-ink">Admin Panel</h1>
+          <p className="text-muted text-sm">System management and monitoring</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-subtle p-1 rounded-xl w-fit">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              tab === t.id ? 'bg-surface text-ink shadow-sm' : 'text-muted hover:text-ink'
             }`}>
             {t.label}
           </button>
@@ -133,45 +133,45 @@ export default function AdminPage() {
       )}
 
       {!loading && tab === 'orgs' && (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="bg-subtle border-b border-line">
               <tr>
                 {['Organization', 'Plan', 'Members', 'Leads', 'Created'].map(h => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">{h}</th>
+                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-muted uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {orgs.map(o => (
-                <tr key={o.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-semibold text-slate-900">{o.name}</td>
+                <tr key={o.id} className="hover:bg-subtle">
+                  <td className="px-6 py-4 font-semibold text-ink">{o.name}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
                       o.subscription === 'agency' ? 'bg-purple-100 text-purple-700' :
                       o.subscription === 'growth' ? 'bg-brand-100 text-brand-700' :
                       o.subscription === 'starter' ? 'bg-green-100 text-green-700' :
-                      'bg-slate-100 text-slate-600'
+                      'bg-subtle text-muted'
                     }`}>{o.subscription || 'free'}</span>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{o._count?.members ?? 0}</td>
-                  <td className="px-6 py-4 text-slate-600">{o._count?.leads ?? 0}</td>
-                  <td className="px-6 py-4 text-slate-400 text-xs">—</td>
+                  <td className="px-6 py-4 text-muted">{o._count?.members ?? 0}</td>
+                  <td className="px-6 py-4 text-muted">{o._count?.leads ?? 0}</td>
+                  <td className="px-6 py-4 text-faint text-xs">—</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {orgs.length === 0 && <p className="text-center py-8 text-slate-400">No organizations yet</p>}
+          {orgs.length === 0 && <p className="text-center py-8 text-faint">No organizations yet</p>}
         </div>
       )}
 
       {!loading && tab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-line shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="bg-subtle border-b border-line">
               <tr>
                 {['User', 'Email', 'Organization', 'Role', 'Joined'].map(h => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">{h}</th>
+                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-muted uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -179,25 +179,25 @@ export default function AdminPage() {
               {users.map(u => {
                 const member = u.teamMembers?.[0];
                 return (
-                  <tr key={u.id} className="hover:bg-slate-50">
+                  <tr key={u.id} className="hover:bg-subtle">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 text-xs font-bold">
+                        <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 text-xs font-semibold">
                           {(u.name || u.email).charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-medium text-slate-900">{u.name || '—'}</span>
+                        <span className="font-medium text-ink">{u.name || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-500">{u.email}</td>
-                    <td className="px-6 py-4 text-slate-600">{member?.organization?.name || '—'}</td>
+                    <td className="px-6 py-4 text-muted">{u.email}</td>
+                    <td className="px-6 py-4 text-muted">{member?.organization?.name || '—'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                         member?.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-700' :
                         member?.role === 'ADMIN' ? 'bg-brand-100 text-brand-700' :
-                        'bg-slate-100 text-slate-600'
+                        'bg-subtle text-muted'
                       }`}>{member?.role || 'N/A'}</span>
                     </td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">
+                    <td className="px-6 py-4 text-faint text-xs">
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -205,7 +205,7 @@ export default function AdminPage() {
               })}
             </tbody>
           </table>
-          {users.length === 0 && <p className="text-center py-8 text-slate-400">No users yet</p>}
+          {users.length === 0 && <p className="text-center py-8 text-faint">No users yet</p>}
         </div>
       )}
 
@@ -213,35 +213,34 @@ export default function AdminPage() {
         <div className="space-y-4">
           <div className="flex justify-end">
             <button onClick={() => { setEditingTpl(null); setTplForm({ name: '', niche: '', channel: 'email', subject: '', content: '' }); setShowTplForm(true); }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors">
+              className="flex items-center gap-2 px-4 py-2.5 bg-accent text-onaccent rounded-xl text-sm font-semibold hover:opacity-85 transition-colors">
               <Plus className="w-4 h-4" /> New Template
             </button>
           </div>
 
           {showTplForm && (
-            <div className="bg-white rounded-2xl border border-purple-200 shadow-sm p-6 space-y-4">
+            <div className="bg-surface rounded-2xl border border-purple-200 shadow-sm p-6 space-y-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-slate-900">{editingTpl ? 'Edit Template' : 'New Template'}</h3>
-                <button onClick={() => setShowTplForm(false)}><X className="w-4 h-4 text-slate-400" /></button>
+                <h3 className="font-semibold text-ink">{editingTpl ? 'Edit Template' : 'New Template'}</h3>
+                <button onClick={() => setShowTplForm(false)}><X className="w-4 h-4 text-faint" /></button>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">Name</label>
                   <input value={tplForm.name} onChange={e => setTplForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    className="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Niche</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">Niche</label>
                   <input value={tplForm.niche} onChange={e => setTplForm(f => ({ ...f, niche: e.target.value }))}
                     placeholder="e.g. hospital, restaurant"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    className="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Channel</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">Channel</label>
                   <select value={tplForm.channel} onChange={e => setTplForm(f => ({ ...f, channel: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    className="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="email">Email</option>
-                    <option value="whatsapp">WhatsApp</option>
                     <option value="linkedin">LinkedIn</option>
                     <option value="sms">SMS</option>
                   </select>
@@ -249,20 +248,20 @@ export default function AdminPage() {
               </div>
               {tplForm.channel === 'email' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Subject</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">Subject</label>
                   <input value={tplForm.subject} onChange={e => setTplForm(f => ({ ...f, subject: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    className="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 </div>
               )}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Content</label>
+                <label className="block text-xs font-semibold text-muted mb-1">Content</label>
                 <textarea value={tplForm.content} onChange={e => setTplForm(f => ({ ...f, content: e.target.value }))}
                   rows={5}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+                  className="w-full px-3 py-2 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
               </div>
               <div className="flex justify-end gap-3">
-                <button onClick={() => setShowTplForm(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancel</button>
-                <button onClick={saveTpl} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700">
+                <button onClick={() => setShowTplForm(false)} className="px-4 py-2 text-sm text-muted hover:text-ink">Cancel</button>
+                <button onClick={saveTpl} className="flex items-center gap-2 px-4 py-2 bg-accent text-onaccent rounded-lg text-sm font-semibold hover:opacity-85">
                   <Check className="w-4 h-4" /> Save Template
                 </button>
               </div>
@@ -271,30 +270,30 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-2 gap-4">
             {templates.map(tpl => (
-              <div key={tpl.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+              <div key={tpl.id} className="bg-surface rounded-2xl border border-line shadow-sm p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <div className="font-bold text-slate-900">{tpl.name}</div>
+                    <div className="font-semibold text-ink">{tpl.name}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="px-2 py-0.5 bg-brand-100 text-brand-700 rounded text-xs font-medium capitalize">{tpl.channel}</span>
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs capitalize">{tpl.niche}</span>
+                      <span className="px-2 py-0.5 bg-subtle text-muted rounded text-xs capitalize">{tpl.niche}</span>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => openEdit(tpl)} className="text-slate-400 hover:text-brand-600 transition-colors">
+                    <button onClick={() => openEdit(tpl)} className="text-faint hover:text-brand-600 transition-colors">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => deleteTpl(tpl.id)} className="text-slate-400 hover:text-red-600 transition-colors">
+                    <button onClick={() => deleteTpl(tpl.id)} className="text-faint hover:text-red-600 transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                {tpl.subject && <p className="text-xs font-semibold text-slate-500 mb-1">Subject: {tpl.subject}</p>}
-                <p className="text-sm text-slate-600 line-clamp-3">{tpl.content}</p>
+                {tpl.subject && <p className="text-xs font-semibold text-muted mb-1">Subject: {tpl.subject}</p>}
+                <p className="text-sm text-muted line-clamp-3">{tpl.content}</p>
               </div>
             ))}
             {templates.length === 0 && (
-              <div className="col-span-2 text-center py-12 text-slate-400">
+              <div className="col-span-2 text-center py-12 text-faint">
                 No templates yet. Create your first niche template.
               </div>
             )}

@@ -1,18 +1,9 @@
-import { Response } from 'express';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
-import multer from 'multer';
 import { prisma } from '../lib/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
+import { getEnv } from '../lib/context';
 import { logActivity } from '../lib/notify';
+import type { AppContext } from '../types';
 
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || 'uploads');
-const MAX_FILE_SIZE = parseInt(process.env.MAX_UPLOAD_BYTES || '', 10) || 10 * 1024 * 1024; // 10MB
-
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
+const DEFAULT_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 
 // Executables and scripts are rejected outright — this store is for sales collateral.
 const BLOCKED_EXTENSIONS = new Set([
@@ -20,99 +11,87 @@ const BLOCKED_EXTENSIONS = new Set([
   '.sh', '.jar', '.app', '.deb', '.rpm'
 ]);
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  // Random stored name: the client-supplied filename never touches the filesystem.
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase().slice(0, 12);
-    cb(null, `${crypto.randomUUID()}${ext}`);
-  }
-});
-
-export const upload = multer({
-  storage,
-  limits: { fileSize: MAX_FILE_SIZE, files: 1 },
-  fileFilter: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (BLOCKED_EXTENSIONS.has(ext)) {
-      return cb(new Error('This file type is not allowed'));
-    }
-    cb(null, true);
-  }
-});
-
-const removeFile = (storedName: string) => {
-  try {
-    fs.unlinkSync(path.join(UPLOAD_DIR, storedName));
-  } catch (error) {
-    console.error('Failed to remove upload:', error);
-  }
+const extensionOf = (fileName: string): string => {
+  const dot = fileName.lastIndexOf('.');
+  return dot === -1 ? '' : fileName.slice(dot).toLowerCase();
 };
 
-export const getAttachments = async (req: AuthRequest, res: Response) => {
-  try {
-    const orgId = req.user!.orgId;
-    const { leadId, dealId } = req.query as Record<string, string>;
+/** Object key in R2. Scoped by org so a listing can never span tenants. */
+const objectKey = (orgId: string, storedName: string) => `${orgId}/${storedName}`;
 
-    if (!leadId && !dealId) {
-      return res.status(400).json({ error: 'leadId or dealId is required' });
-    }
+export const getAttachments = async (c: AppContext) => {
+  const orgId = c.get('user').orgId;
+  const leadId = c.req.query('leadId');
+  const dealId = c.req.query('dealId');
 
-    const attachments = await prisma.attachment.findMany({
-      where: {
-        organizationId: orgId,
-        ...(leadId && { leadId }),
-        ...(dealId && { dealId })
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.status(200).json(attachments);
-  } catch (error) {
-    console.error('Get attachments error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!leadId && !dealId) {
+    return c.json({ error: 'leadId or dealId is required' }, 400);
   }
+
+  const attachments = await prisma.attachment.findMany({
+    where: {
+      organizationId: orgId,
+      ...(leadId && { leadId }),
+      ...(dealId && { dealId })
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  return c.json(attachments);
 };
 
-export const uploadAttachment = async (req: AuthRequest, res: Response) => {
-  const file = req.file;
+export const uploadAttachment = async (c: AppContext) => {
+  const env = getEnv();
+  const orgId = c.get('user').orgId;
+  const maxBytes = parseInt(env.MAX_UPLOAD_BYTES || '', 10) || DEFAULT_MAX_BYTES;
+
+  const form = await c.req.formData();
+  const file = form.get('file');
+  const leadId = (form.get('leadId') as string | null) || undefined;
+  const dealId = (form.get('dealId') as string | null) || undefined;
+
+  if (!(file instanceof File)) {
+    return c.json({ error: 'No file uploaded' }, 400);
+  }
+  if (file.size > maxBytes) {
+    return c.json({ error: 'File is too large' }, 413);
+  }
+  if (BLOCKED_EXTENSIONS.has(extensionOf(file.name))) {
+    return c.json({ error: 'This file type is not allowed' }, 400);
+  }
+  if (!leadId && !dealId) {
+    return c.json({ error: 'leadId or dealId is required' }, 400);
+  }
+
+  // Verify ownership before writing — otherwise an orphan object is left in R2.
+  if (leadId) {
+    const lead = await prisma.lead.findFirst({ where: { id: leadId, organizationId: orgId } });
+    if (!lead) return c.json({ error: 'Lead not found' }, 404);
+  }
+  if (dealId) {
+    const deal = await prisma.deal.findFirst({ where: { id: dealId, organizationId: orgId } });
+    if (!deal) return c.json({ error: 'Deal not found' }, 404);
+  }
+
+  // Random stored name: the client-supplied filename never becomes a key.
+  const storedName = `${crypto.randomUUID()}${extensionOf(file.name).slice(0, 12)}`;
+  const key = objectKey(orgId, storedName);
+
+  await env.ATTACHMENTS.put(key, file.stream(), {
+    httpMetadata: { contentType: file.type || 'application/octet-stream' }
+  });
+
   try {
-    const orgId = req.user!.orgId;
-    const { leadId, dealId } = req.body as Record<string, string | undefined>;
-
-    if (!file) return res.status(400).json({ error: 'No file uploaded' });
-
-    if (!leadId && !dealId) {
-      removeFile(file.filename);
-      return res.status(400).json({ error: 'leadId or dealId is required' });
-    }
-
-    // Verify ownership before recording — otherwise an orphan file is left on disk.
-    if (leadId) {
-      const lead = await prisma.lead.findFirst({ where: { id: leadId, organizationId: orgId } });
-      if (!lead) {
-        removeFile(file.filename);
-        return res.status(404).json({ error: 'Lead not found' });
-      }
-    }
-    if (dealId) {
-      const deal = await prisma.deal.findFirst({ where: { id: dealId, organizationId: orgId } });
-      if (!deal) {
-        removeFile(file.filename);
-        return res.status(404).json({ error: 'Deal not found' });
-      }
-    }
-
     const attachment = await prisma.attachment.create({
       data: {
         organizationId: orgId,
-        fileName: file.originalname,
-        storedName: file.filename,
-        mimeType: file.mimetype,
+        fileName: file.name,
+        storedName,
+        mimeType: file.type || 'application/octet-stream',
         size: file.size,
         leadId: leadId ?? null,
         dealId: dealId ?? null,
-        uploadedById: req.user!.userId
+        uploadedById: c.get('user').userId
       }
     });
 
@@ -120,53 +99,45 @@ export const uploadAttachment = async (req: AuthRequest, res: Response) => {
       attachmentId: attachment.id
     });
 
-    res.status(201).json(attachment);
+    return c.json(attachment, 201);
   } catch (error) {
-    if (file) removeFile(file.filename);
-    console.error('Upload attachment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    // Don't leave the object behind if the row failed to write.
+    await env.ATTACHMENTS.delete(key).catch(() => undefined);
+    throw error;
   }
 };
 
-export const downloadAttachment = async (req: AuthRequest, res: Response) => {
-  try {
-    const attachment = await prisma.attachment.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.orgId }
-    });
-    if (!attachment) return res.status(404).json({ error: 'Attachment not found' });
+export const downloadAttachment = async (c: AppContext) => {
+  const orgId = c.get('user').orgId;
+  const attachment = await prisma.attachment.findFirst({
+    where: { id: c.req.param('id'), organizationId: orgId }
+  });
+  if (!attachment) return c.json({ error: 'Attachment not found' }, 404);
 
-    // storedName is server-generated, but re-anchor to UPLOAD_DIR as defence in depth.
-    const filePath = path.join(UPLOAD_DIR, path.basename(attachment.storedName));
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File is missing from storage' });
+  const object = await getEnv().ATTACHMENTS.get(objectKey(orgId, attachment.storedName));
+  if (!object) return c.json({ error: 'File is missing from storage' }, 404);
+
+  return new Response(object.body, {
+    headers: {
+      'Content-Type': attachment.mimeType,
+      // Always download rather than render, so an uploaded HTML/SVG can't run in our origin.
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(attachment.fileName)}"`,
+      'Content-Length': String(attachment.size)
     }
-
-    res.setHeader('Content-Type', attachment.mimeType);
-    // Always download rather than render, so an uploaded HTML/SVG can't run in our origin.
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${encodeURIComponent(attachment.fileName)}"`
-    );
-    fs.createReadStream(filePath).pipe(res);
-  } catch (error) {
-    console.error('Download attachment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  });
 };
 
-export const deleteAttachment = async (req: AuthRequest, res: Response) => {
-  try {
-    const attachment = await prisma.attachment.findFirst({
-      where: { id: req.params.id, organizationId: req.user!.orgId }
-    });
-    if (!attachment) return res.status(404).json({ error: 'Attachment not found' });
+export const deleteAttachment = async (c: AppContext) => {
+  const orgId = c.get('user').orgId;
+  const attachment = await prisma.attachment.findFirst({
+    where: { id: c.req.param('id'), organizationId: orgId }
+  });
+  if (!attachment) return c.json({ error: 'Attachment not found' }, 404);
 
-    await prisma.attachment.delete({ where: { id: attachment.id } });
-    removeFile(attachment.storedName);
+  await prisma.attachment.delete({ where: { id: attachment.id } });
+  await getEnv()
+    .ATTACHMENTS.delete(objectKey(orgId, attachment.storedName))
+    .catch((error) => console.error('Failed to remove R2 object:', error));
 
-    res.status(200).json({ message: 'Attachment deleted' });
-  } catch (error) {
-    console.error('Delete attachment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  return c.json({ message: 'Attachment deleted' });
 };

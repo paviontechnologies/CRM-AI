@@ -19,7 +19,7 @@ import api from '@/lib/api';
 
 interface CampaignStep {
   id?: string;
-  type: 'email' | 'whatsapp' | 'linkedin';
+  type: 'email' | 'linkedin';
   dayOffset: number;
   subject?: string;
   content: string;
@@ -41,19 +41,19 @@ interface Campaign {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    draft: 'bg-slate-100 text-slate-600',
+    draft: 'bg-subtle text-muted',
     active: 'bg-green-100 text-green-700',
     paused: 'bg-yellow-100 text-yellow-700',
     completed: 'bg-brand-100 text-brand-700',
   };
   return (
-    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg capitalize ${map[status] || 'bg-slate-100 text-slate-600'}`}>
+    <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg capitalize ${map[status] || 'bg-subtle text-muted'}`}>
       {status}
     </span>
   );
 }
 
-const STEP_TYPES = ['email', 'whatsapp', 'linkedin'] as const;
+const STEP_TYPES = ['email', 'linkedin'] as const;
 
 function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [name, setName] = useState('');
@@ -95,10 +95,10 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h3 className="font-bold text-slate-900 text-lg">Create Campaign</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <h3 className="font-semibold text-ink text-lg">Create Campaign</h3>
+          <button onClick={onClose} className="text-faint hover:text-muted">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -107,41 +107,41 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
           <div className="p-6 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Campaign Name *</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Campaign Name *</label>
                 <input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Hospital CRM Outreach Q2"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
                   placeholder="What is this campaign about?"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                  className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Target Industry</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Target Industry</label>
                 <input
                   value={targetIndustry}
                   onChange={(e) => setTargetIndustry(e.target.value)}
                   placeholder="e.g. Healthcare"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Target City</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Target City</label>
                 <input
                   value={targetCity}
                   onChange={(e) => setTargetCity(e.target.value)}
                   placeholder="e.g. Delhi"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -149,7 +149,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
             {/* Steps */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-slate-700">Sequence Steps</label>
+                <label className="text-sm font-semibold text-ink">Sequence Steps</label>
                 <button
                   type="button"
                   onClick={addStep}
@@ -161,28 +161,28 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
 
               <div className="space-y-3">
                 {steps.map((step, i) => (
-                  <div key={i} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50/50">
+                  <div key={i} className="border border-line rounded-xl p-4 space-y-3 bg-subtle/50">
                     <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 bg-brand-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                      <span className="w-6 h-6 bg-brand-600 text-onaccent rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
                         {i + 1}
                       </span>
                       <select
                         value={step.type}
                         onChange={(e) => updateStep(i, 'type', e.target.value)}
-                        className="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="text-sm border border-line rounded-lg px-2 py-1.5 bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500"
                       >
                         {STEP_TYPES.map((t) => (
                           <option key={t} value={t} className="capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>
                         ))}
                       </select>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-slate-500">Day</span>
+                        <span className="text-xs text-muted">Day</span>
                         <input
                           type="number"
                           min={1}
                           value={step.dayOffset}
                           onChange={(e) => updateStep(i, 'dayOffset', parseInt(e.target.value) || 1)}
-                          className="w-14 text-sm border border-slate-200 rounded-lg px-2 py-1.5 text-center bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          className="w-14 text-sm border border-line rounded-lg px-2 py-1.5 text-center bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
                       </div>
                       <button
@@ -198,7 +198,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
                         value={step.subject || ''}
                         onChange={(e) => updateStep(i, 'subject', e.target.value)}
                         placeholder="Email subject line..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        className="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500"
                       />
                     )}
                     <textarea
@@ -206,7 +206,7 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
                       onChange={(e) => updateStep(i, 'content', e.target.value)}
                       rows={3}
                       placeholder={`${step.type === 'email' ? 'Email body' : 'Message'}... Use {{firstName}}, {{companyName}} for personalization`}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                      className="w-full px-3 py-2 border border-line rounded-lg text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                     />
                   </div>
                 ))}
@@ -222,14 +222,14 @@ function CreateCampaignModal({ onClose, onCreated }: { onClose: () => void; onCr
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors"
+              className="px-4 py-2.5 bg-subtle hover:bg-line text-ink rounded-xl text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+              className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
             >
               {loading ? 'Creating...' : 'Create Campaign'}
             </button>
@@ -302,18 +302,18 @@ function CampaignCard({
     : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-surface rounded-2xl border border-line shadow-sm hover:shadow-md transition-shadow">
       <div className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
-              <h3 className="font-bold text-slate-900 truncate">{campaign.name}</h3>
+              <h3 className="font-semibold text-ink truncate">{campaign.name}</h3>
               <StatusBadge status={campaign.status} />
             </div>
             {campaign.description && (
-              <p className="text-sm text-slate-500 mb-3 line-clamp-2">{campaign.description}</p>
+              <p className="text-sm text-muted mb-3 line-clamp-2">{campaign.description}</p>
             )}
-            <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+            <div className="flex flex-wrap gap-4 text-sm text-muted">
               {campaign.targetIndustry && (
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-brand-400 rounded-full"></span>
@@ -354,7 +354,7 @@ function CampaignCard({
             </button>
             <button
               onClick={loadDetail}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 bg-subtle hover:bg-subtle text-muted rounded-xl text-xs font-medium transition-colors"
             >
               {loadingDetail ? (
                 <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
@@ -378,20 +378,20 @@ function CampaignCard({
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-50">
           <div className="text-center">
-            <div className="text-lg font-bold text-slate-900">{campaign.enrolledCount || 0}</div>
-            <div className="text-xs text-slate-400 flex items-center justify-center gap-1 mt-0.5">
+            <div className="text-lg font-semibold text-ink">{campaign.enrolledCount || 0}</div>
+            <div className="text-xs text-faint flex items-center justify-center gap-1 mt-0.5">
               <Users className="w-3 h-3" /> Enrolled
             </div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-slate-900">{campaign.sentCount || 0}</div>
-            <div className="text-xs text-slate-400 flex items-center justify-center gap-1 mt-0.5">
+            <div className="text-lg font-semibold text-ink">{campaign.sentCount || 0}</div>
+            <div className="text-xs text-faint flex items-center justify-center gap-1 mt-0.5">
               <Send className="w-3 h-3" /> Sent
             </div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-slate-900">{replyRate}%</div>
-            <div className="text-xs text-slate-400 flex items-center justify-center gap-1 mt-0.5">
+            <div className="text-lg font-semibold text-ink">{replyRate}%</div>
+            <div className="text-xs text-faint flex items-center justify-center gap-1 mt-0.5">
               <BarChart3 className="w-3 h-3" /> Reply Rate
             </div>
           </div>
@@ -401,26 +401,26 @@ function CampaignCard({
       {/* Expanded Steps */}
       {expanded && detail && (
         <div className="px-5 pb-5 border-t border-slate-50 pt-4">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3">Sequence Steps</h4>
+          <h4 className="text-sm font-semibold text-ink mb-3">Sequence Steps</h4>
           {(!detail.steps || detail.steps.length === 0) && (
-            <p className="text-slate-400 text-sm">No steps configured</p>
+            <p className="text-faint text-sm">No steps configured</p>
           )}
           <div className="space-y-2">
             {detail.steps?.map((step, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-                <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${step.type === 'email' ? 'bg-brand-100 text-brand-600' : step.type === 'whatsapp' ? 'bg-green-100 text-green-600' : 'bg-brand-100 text-brand-600'}`}>
+              <div key={i} className="flex items-start gap-3 p-3 bg-subtle rounded-xl">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-brand-100 text-brand-600">
                   {step.type === 'email' ? <Mail className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-700 capitalize">{step.type}</span>
-                    <span className="text-xs text-slate-400">· Day {step.dayOffset}</span>
+                    <span className="text-xs font-semibold text-ink capitalize">{step.type}</span>
+                    <span className="text-xs text-faint">· Day {step.dayOffset}</span>
                   </div>
                   {step.subject && (
-                    <p className="text-xs text-slate-600 font-medium mt-0.5">{step.subject}</p>
+                    <p className="text-xs text-muted font-medium mt-0.5">{step.subject}</p>
                   )}
                   {step.content && (
-                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{step.content}</p>
+                    <p className="text-xs text-faint mt-0.5 line-clamp-2">{step.content}</p>
                   )}
                 </div>
               </div>
@@ -470,12 +470,12 @@ export default function CampaignsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Campaigns</h1>
-          <p className="text-slate-500 text-sm mt-1">Build and manage your AI-powered outreach sequences</p>
+          <h1 className="text-2xl font-semibold text-ink">Campaigns</h1>
+          <p className="text-muted text-sm mt-1">Build and manage your AI-powered outreach sequences</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-brand-200"
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Create Campaign
@@ -489,14 +489,14 @@ export default function CampaignsPage() {
       {/* Stats overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total', value: campaigns.length, color: 'text-slate-900' },
+          { label: 'Total', value: campaigns.length, color: 'text-ink' },
           { label: 'Active', value: campaigns.filter(c => c.status === 'active').length, color: 'text-green-600' },
-          { label: 'Draft', value: campaigns.filter(c => c.status === 'draft').length, color: 'text-slate-500' },
+          { label: 'Draft', value: campaigns.filter(c => c.status === 'draft').length, color: 'text-muted' },
           { label: 'Completed', value: campaigns.filter(c => c.status === 'completed').length, color: 'text-brand-600' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
-            <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-            <div className="text-xs text-slate-400 mt-1">{stat.label} Campaigns</div>
+          <div key={stat.label} className="bg-surface rounded-2xl p-4 border border-line shadow-sm text-center">
+            <div className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</div>
+            <div className="text-xs text-faint mt-1">{stat.label} Campaigns</div>
           </div>
         ))}
       </div>
@@ -510,15 +510,15 @@ export default function CampaignsPage() {
 
       {/* Empty */}
       {!loading && campaigns.length === 0 && (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Mail className="w-7 h-7 text-slate-400" />
+        <div className="text-center py-20 bg-surface rounded-2xl border border-line">
+          <div className="w-16 h-16 bg-subtle rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-7 h-7 text-faint" />
           </div>
-          <p className="text-slate-700 font-semibold text-lg">No campaigns yet</p>
-          <p className="text-slate-400 text-sm mt-1 mb-6">Create your first outreach campaign to start engaging leads</p>
+          <p className="text-ink font-semibold text-lg">No campaigns yet</p>
+          <p className="text-faint text-sm mt-1 mb-6">Create your first outreach campaign to start engaging leads</p>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors"
+            className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors"
           >
             Create First Campaign
           </button>

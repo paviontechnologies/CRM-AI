@@ -1,0 +1,103 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "crm-ai-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-16",
+  // Required for node:crypto, node:async_hooks and the Prisma/Stripe shims.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Campaign sequences are driven by this cron, not an in-process timer —
+  // a Worker isolate does not outlive its request.
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+
+  "r2_buckets": [
+    {
+      // Create first: npx wrangler r2 bucket create crm-ai-attachments
+      "binding": "ATTACHMENTS",
+      "bucket_name": "crm-ai-attachments"
+    }
+  ],
+
+  // Counters are per-colo and eventually consistent — good enough for abuse
+  // blunting, which is all these are for. Period must be 10 or 60 seconds.
+  "ratelimits": [
+    {
+      "name": "API_RATE_LIMIT",
+      "namespace_id": "1001",
+      "simple": { "limit": 200, "period": 60 }
+    },
+    {
+      "name": "AI_RATE_LIMIT",
+      "namespace_id": "1002",
+      "simple": { "limit": 20, "period": 60 }
+    },
+    {
+      // Credential endpoints: the real brute-force surface. The binding caps
+      // the window at 60s, so the old 10-per-15-minutes became 5-per-minute.
+      "name": "AUTH_RATE_LIMIT",
+      "namespace_id": "1003",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  },
+
+  // Non-secret config. Secrets are set with `npx wrangler secret put <NAME>`:
+  //   DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY,
+  //   INBOUND_WEBHOOK_SECRET
+  "vars": {
+    "FRONTEND_URL": "https://crm-ai-web.rahul-bajediyal.workers.dev",
+    "PUBLIC_API_URL": "https://crm-ai-api.rahul-bajediyal.workers.dev",
+    "EMAIL_FROM": "onboarding@resend.dev",
+    "EMAIL_FROM_NAME": "CRM AI",
+    "MAX_UPLOAD_BYTES": "10485760",
+    "SUPABASE_URL": "https://nqdcrwtvdpqkizizbupr.supabase.co"
+  },
+
+  "env": {
+    "staging": {
+      "name": "crm-ai-api-staging",
+      "triggers": {
+        "crons": ["* * * * *"]
+      },
+      "r2_buckets": [
+        {
+          "binding": "ATTACHMENTS",
+          "bucket_name": "crm-ai-attachments-staging"
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "API_RATE_LIMIT",
+          "namespace_id": "2001",
+          "simple": { "limit": 200, "period": 60 }
+        },
+        {
+          "name": "AI_RATE_LIMIT",
+          "namespace_id": "2002",
+          "simple": { "limit": 20, "period": 60 }
+        },
+        {
+          "name": "AUTH_RATE_LIMIT",
+          "namespace_id": "2003",
+          "simple": { "limit": 5, "period": 60 }
+        }
+      ],
+      "observability": {
+        "enabled": true
+      },
+      "vars": {
+        "FRONTEND_URL": "https://crm-ai-web-staging.rahul-bajediyal.workers.dev",
+        "PUBLIC_API_URL": "https://crm-ai-api-staging.rahul-bajediyal.workers.dev",
+        "EMAIL_FROM": "onboarding@resend.dev",
+        "EMAIL_FROM_NAME": "CRM AI (staging)",
+        "MAX_UPLOAD_BYTES": "10485760",
+        "SUPABASE_URL": "https://nqdcrwtvdpqkizizbupr.supabase.co"
+      }
+    }
+  }
+}

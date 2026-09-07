@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getNotifications,
   markRead,
@@ -6,10 +6,11 @@ import {
   deleteNotification
 } from '../controllers/notifications.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
-router.use(authenticate);
+router.use('*', authenticate);
 router.get('/', getNotifications);
 router.patch('/read-all', markAllRead);
 router.patch('/:id/read', markRead);

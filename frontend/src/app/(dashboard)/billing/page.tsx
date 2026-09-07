@@ -10,7 +10,6 @@ interface Plan {
   leadCredits: number;
   aiCredits: number;
   emailCredits: number;
-  whatsappCredits?: number;
   features?: string[];
 }
 
@@ -24,7 +23,6 @@ interface Usage {
   leadCredits: { used: number; limit: number };
   aiCredits: { used: number; limit: number };
   emailCredits: { used: number; limit: number };
-  whatsappCredits?: { used: number; limit: number };
 }
 
 const FALLBACK_PLANS: Plan[] = [
@@ -70,21 +68,21 @@ function UsageMeter({ label, used, limit, color }: { label: string; used: number
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const isHigh = pct >= 80;
   return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+    <div className="bg-surface rounded-2xl p-5 border border-line shadow-sm">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-slate-700">{label}</span>
-        <span className={`text-xs font-bold ${isHigh ? 'text-red-600' : 'text-slate-500'}`}>
+        <span className="text-sm font-semibold text-ink">{label}</span>
+        <span className={`text-xs font-semibold ${isHigh ? 'text-red-600' : 'text-muted'}`}>
           {used.toLocaleString()} / {limit >= 999999 ? '∞' : limit.toLocaleString()}
         </span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-2.5">
+      <div className="w-full bg-subtle rounded-full h-2.5">
         <div
           className={`h-2.5 rounded-full transition-all ${isHigh ? 'bg-red-500' : color}`}
           style={{ width: `${pct}%` }}
         />
       </div>
       <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-slate-400">{pct}% used</span>
+        <span className="text-xs text-faint">{pct}% used</span>
         {isHigh && (
           <span className="text-xs text-red-600 font-medium flex items-center gap-1">
             <AlertCircle className="w-3 h-3" /> Near limit
@@ -150,15 +148,15 @@ export default function BillingPage() {
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Billing & Plans</h1>
-        <p className="text-slate-500 text-sm mt-1">Manage your subscription and usage</p>
+        <h1 className="text-2xl font-semibold text-ink">Billing & Plans</h1>
+        <p className="text-muted text-sm mt-1">Manage your subscription and usage</p>
       </div>
 
       {/* Current Plan Banner */}
-      <div className="bg-gradient-to-r from-brand-600 to-brand-600 rounded-2xl p-5 text-white flex items-center justify-between">
+      <div className="bg-accent rounded-2xl p-5 text-onaccent flex items-center justify-between">
         <div>
           <p className="text-brand-100 text-sm font-medium">Current Plan</p>
-          <p className="text-2xl font-bold mt-0.5 capitalize">{currentPlan}</p>
+          <p className="text-2xl font-semibold mt-0.5 capitalize">{currentPlan}</p>
           {subscription?.status && (
             <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full mt-2 ${
               subscription.status === 'active' ? 'bg-green-400/20 text-green-100' : 'bg-yellow-400/20 text-yellow-100'
@@ -168,7 +166,7 @@ export default function BillingPage() {
             </span>
           )}
         </div>
-        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+        <div className="w-12 h-12 bg-surface/20 rounded-2xl flex items-center justify-center">
           <CreditCard className="w-6 h-6" />
         </div>
       </div>
@@ -179,7 +177,7 @@ export default function BillingPage() {
       {/* Usage Meters */}
       {usage && (
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Usage This Month</h2>
+          <h2 className="text-lg font-semibold text-ink mb-4">Usage This Month</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <UsageMeter
               label="Lead Credits"
@@ -199,21 +197,13 @@ export default function BillingPage() {
               limit={usage.emailCredits?.limit || 500}
               color="bg-emerald-500"
             />
-            {usage.whatsappCredits && (
-              <UsageMeter
-                label="WhatsApp Credits"
-                used={usage.whatsappCredits.used || 0}
-                limit={usage.whatsappCredits.limit || 100}
-                color="bg-green-500"
-              />
-            )}
           </div>
         </div>
       )}
 
       {/* Plans */}
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Available Plans</h2>
+        <h2 className="text-lg font-semibold text-ink mb-4">Available Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {plans.map((plan) => {
             const isCurrentPlan = currentPlan === plan.id || currentPlan === plan.name?.toLowerCase();
@@ -221,52 +211,52 @@ export default function BillingPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative bg-white rounded-2xl border-2 p-5 transition-all ${
+                className={`relative bg-surface rounded-2xl border-2 p-5 transition-all ${
                   isCurrentPlan
-                    ? 'border-brand-500 shadow-lg shadow-brand-100'
+                    ? 'border-ink'
                     : isPopular
                     ? 'border-brand-200 shadow-md'
-                    : 'border-slate-100 shadow-sm hover:border-slate-200 hover:shadow-md'
+                    : 'border-line shadow-sm hover:border-line hover:shadow-md'
                 }`}
               >
                 {isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-onaccent text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
                     Current Plan
                   </div>
                 )}
                 {isPopular && !isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-onaccent text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
                     Most Popular
                   </div>
                 )}
 
                 <div className="mb-4">
-                  <p className="text-sm font-bold text-slate-500">{plan.name}</p>
+                  <p className="text-sm font-semibold text-muted">{plan.name}</p>
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-3xl font-bold text-slate-900">${plan.price}</span>
-                    <span className="text-sm text-slate-400">/month</span>
+                    <span className="text-3xl font-semibold text-ink">${plan.price}</span>
+                    <span className="text-sm text-faint">/month</span>
                   </div>
                 </div>
 
                 <div className="space-y-2 mb-5">
                   {plan.features ? (
                     plan.features.map((f, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
+                      <div key={i} className="flex items-center gap-2 text-sm text-muted">
                         <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                         {f}
                       </div>
                     ))
                   ) : (
                     <>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-muted">
                         <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                         {plan.leadCredits >= 999999 ? 'Unlimited' : plan.leadCredits.toLocaleString()} leads
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-muted">
                         <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                         {plan.aiCredits >= 999999 ? 'Unlimited' : plan.aiCredits.toLocaleString()} AI credits
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-muted">
                         <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                         {plan.emailCredits >= 999999 ? 'Unlimited' : plan.emailCredits.toLocaleString()} emails
                       </div>
@@ -284,8 +274,8 @@ export default function BillingPage() {
                     disabled={checkoutLoading === plan.id}
                     className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2 ${
                       isPopular
-                        ? 'bg-brand-600 hover:bg-brand-700 text-white'
-                        : 'bg-brand-600 hover:bg-brand-700 text-white'
+                        ? 'bg-brand-600 hover:bg-brand-700 text-onaccent'
+                        : 'bg-brand-600 hover:bg-brand-700 text-onaccent'
                     }`}
                   >
                     {checkoutLoading === plan.id ? (
@@ -303,19 +293,19 @@ export default function BillingPage() {
       </div>
 
       {/* FAQ */}
-      <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-        <h3 className="font-bold text-slate-900 mb-4">Billing FAQ</h3>
-        <div className="space-y-3 text-sm text-slate-600">
+      <div className="bg-subtle rounded-2xl p-6 border border-line">
+        <h3 className="font-semibold text-ink mb-4">Billing FAQ</h3>
+        <div className="space-y-3 text-sm text-muted">
           <div>
-            <p className="font-semibold text-slate-800">Can I change plans anytime?</p>
+            <p className="font-semibold text-ink">Can I change plans anytime?</p>
             <p className="mt-1">Yes, you can upgrade or downgrade your plan at any time. Changes take effect on the next billing cycle.</p>
           </div>
           <div>
-            <p className="font-semibold text-slate-800">What happens when I reach my credit limit?</p>
+            <p className="font-semibold text-ink">What happens when I reach my credit limit?</p>
             <p className="mt-1">You'll be notified when you reach 80% usage. You can upgrade your plan or purchase additional credits.</p>
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Do unused credits roll over?</p>
+            <p className="font-semibold text-ink">Do unused credits roll over?</p>
             <p className="mt-1">Credits reset monthly. Unused credits do not roll over to the next billing period.</p>
           </div>
         </div>

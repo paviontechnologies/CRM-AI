@@ -1,8 +1,8 @@
 # CRM-AI
 
 An AI-assisted B2B sales CRM. Generate and score leads with Claude, run multi-step outreach
-sequences, and track deals through a drag-and-drop pipeline — multi-tenant, with per-org billing
-and role-based access.
+sequences, and track deals through a drag-and-drop pipeline — multi-tenant, with plan limits and
+role-based access.
 
 Built for [Pavion Technologies](https://paviontechnologies.com).
 
@@ -56,8 +56,8 @@ by their role (a `VIEWER` gets read-only). See [The AI assistant](#the-ai-assist
 - Multiple pipelines per organisation.
 
 ### Outreach
-- Multi-step campaign sequences (email / WhatsApp / LinkedIn) with per-step day offsets.
-- **A background scheduler actually sends them** over SMTP — see
+- Multi-step campaign sequences (email / LinkedIn) with per-step day offsets.
+- **A cron-driven scheduler actually sends them** over Resend — see
   [How the campaign engine works](#how-the-campaign-engine-works).
 - Open tracking via a 1×1 pixel; opens land on the lead timeline.
 - AI-drafted outreach per lead, saved as a draft message you can review.
@@ -68,7 +68,7 @@ by their role (a `VIEWER` gets read-only). See [The AI assistant](#the-ai-assist
 - In-app notification bell (task assigned, lead assigned).
 - Team invites with expiring tokens, roles: `SUPERADMIN` / `ADMIN` / `AGENT` / `VIEWER`.
 - Analytics dashboard — leads by source/status/industry, weekly trend, campaign performance.
-- Stripe subscriptions with plan tiers and usage metering.
+- Plan tiers with per-org usage metering and limit enforcement.
 - Superadmin panel for cross-org stats and niche templates.
 
 ---
@@ -80,12 +80,12 @@ by their role (a `VIEWER` gets read-only). See [The AI assistant](#the-ai-assist
 | Frontend | Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS 4 |
 | State / data | Zustand, Axios with refresh-token interceptor |
 | UI | lucide-react, Recharts, @dnd-kit, framer-motion |
-| Backend | Node.js 20+, Express 4, TypeScript |
-| Database | PostgreSQL (Neon) via Prisma 6 |
+| Backend | Cloudflare Workers, Hono 4, TypeScript |
+| Database | Neon Postgres via Prisma 6 (`@prisma/adapter-neon`) |
 | AI | Anthropic Claude (`claude-haiku-4-5`) |
-| Auth | JWT access tokens + hashed refresh tokens in httpOnly cookies |
-| Email | Nodemailer (SMTP) |
-| Payments | Stripe Checkout + webhooks |
+| Auth | Supabase Auth (identity) → short-lived API tokens signed with `jose` |
+| Email | Resend HTTP API |
+| Files | Cloudflare R2 |
 
 ---
 
@@ -93,7 +93,8 @@ by their role (a `VIEWER` gets read-only). See [The AI assistant](#the-ai-assist
 
 ### Prerequisites
 - Node.js **20.9+** (Next.js 16 requirement)
-- A PostgreSQL database — [Neon](https://neon.tech) works well and is what the config assumes
+- A [Neon](https://neon.tech) Postgres database — the Workers driver adapter targets it specifically
+- A [Cloudflare](https://dash.cloudflare.com/sign-up) account (free tier is enough)
 
 ### 1. Clone and install
 
@@ -114,7 +115,7 @@ cp .env.example .env
 
 Fill in `DATABASE_URL` and `DIRECT_URL` at minimum — see
 [Environment variables](#environment-variables). Everything else is optional and degrades
-gracefully (AI returns mock scores, emails log to the console, Stripe returns a mock checkout URL).
+gracefully (AI returns mock scores, emails log to the console).
 
 ### 3. Create the schema
 
@@ -133,20 +134,20 @@ cp .env.example .env.local
 ```
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:5001/api
+NEXT_PUBLIC_API_URL=http://localhost:8787/api
 ```
 
 ### 5. Run both
 
 ```bash
 # terminal 1
-cd backend && npm run dev      # http://localhost:5001
+cd backend && npm run dev      # http://localhost:8787 (wrangler dev)
 
 # terminal 2
 cd frontend && npm run dev     # http://localhost:3000
 ```
 
-Health check: `curl http://localhost:5001/health`
+Health check: `curl http://localhost:8787/health`
 
 ---
 
@@ -162,27 +163,23 @@ Health check: `curl http://localhost:5001/health`
 | `DIRECT_URL` | Non-pooled URL, used by `prisma migrate`. Set it to the same value if you only have one. |
 | `JWT_SECRET` | Long random string. **Change this before deploying.** |
 
+
 **Optional — each one degrades gracefully when unset**
 
 | Variable | Default behaviour when unset |
 | --- | --- |
-| `PORT` | `5001` |
+| `SUPABASE_URL` | Supabase project URL. Its public JWKS verifies Supabase Auth tokens — `POST /api/auth/session` fails without it. |
 | `FRONTEND_URL` | `http://localhost:3000` — also the CORS origin |
 | `PUBLIC_API_URL` | Base URL used to build open-tracking pixel links. Set this in production. |
 | `ANTHROPIC_API_KEY` | AI scoring and generation return plausible mock data |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | Emails are logged to the console instead of sent |
-| `GOOGLE_CLIENT_ID` | `POST /api/auth/google` returns 501 |
-| `STRIPE_SECRET_KEY` | Checkout returns a mock success URL |
-| `STRIPE_WEBHOOK_SECRET` | Webhook rejects all events |
-| `STRIPE_STARTER_PRICE_ID` / `STRIPE_GROWTH_PRICE_ID` / `STRIPE_AGENCY_PRICE_ID` | Placeholder price IDs |
-| `CAMPAIGN_TICK_MS` | `60000` — how often the scheduler looks for due steps |
+| `RESEND_API_KEY` | Emails are logged to the console instead of sent |
 | `CAMPAIGN_DAY_MS` | `86400000` — how long one "day" of a sequence lasts |
 | `CAMPAIGN_BATCH_SIZE` | `25` — enrollments processed per tick |
-| `CAMPAIGN_SCHEDULER` | Set to `off` to disable the scheduler entirely |
-| `UPLOAD_DIR` | `uploads` — where attachments are written |
-| `MAX_UPLOAD_BYTES` | `10485760` (10 MB) |
+| `CAMPAIGN_SCHEDULER` | Set to `off` to stop the cron scheduler from sending |
+| `MAX_UPLOAD_BYTES` | `10485760` (10 MB) — attachments go to the R2 bucket bound as `ATTACHMENTS` |
 
-> **Never commit a real `.env`.** Both `.env` and `uploads/` are gitignored.
+> **Never commit a real `.env`.** It is gitignored. In production these live as Cloudflare
+> secrets (`wrangler secret put`), not in a file.
 
 ### `frontend/.env.local`
 
@@ -202,16 +199,18 @@ CRM-AI/
 │   │   └── seed.ts                # demo org, leads, deals, campaigns
 │   └── src/
 │       ├── controllers/           # request handlers, one per domain
-│       ├── routes/                # express routers
+│       ├── routes/                # Hono routers
 │       ├── services/
 │       │   ├── ai.service.ts          # Claude calls + mock fallbacks
-│       │   ├── email.service.ts       # nodemailer wrappers
-│       │   └── campaign.scheduler.ts  # background sequence worker
+│       │   ├── email.service.ts       # Resend HTTP wrappers
+│       │   ├── campaign.scheduler.ts  # cron-driven sequence engine
+│       │   └── reply.service.ts       # inbound reply recording
 │       ├── middleware/auth.middleware.ts   # authenticate + requireRole
 │       ├── lib/
+│       │   ├── context.ts        # per-request AsyncLocalStorage (db + env)
 │       │   ├── prisma.ts
 │       │   └── notify.ts          # notifications + activity logging helpers
-│       └── index.ts               # app wiring, error handlers, scheduler boot
+│       └── index.ts               # app wiring, error handler, fetch + scheduled
 │
 └── frontend/src/
     ├── app/
@@ -241,16 +240,14 @@ Base URL: `/api`. All routes require `Authorization: Bearer <token>` unless mark
 
 | Method | Path | Description |
 | --- | --- | --- |
-| POST | `/register` | **Public.** Creates user + org + default pipeline |
-| POST | `/login` | **Public** |
-| POST | `/google` | **Public.** Google ID-token sign-in |
-| POST | `/forgot-password` | **Public.** Sends an OTP |
-| POST | `/verify-otp` | **Public** |
-| POST | `/refresh` | **Public.** Rotates the access token from the refresh cookie |
+| POST | `/session` | **Public.** Trades a Supabase access token for an API token; creates the user's workspace on first sign-in |
+| POST | `/dev-login` | **Dev only.** 404s unless `DEV_AUTH_BYPASS=true` |
 | GET | `/me` | Current user, org and role |
 | PATCH | `/me` | Update profile |
 | PATCH | `/org` | Update org name, logo, AI qualification prompt (admin only) |
-| PATCH | `/password` | Change password |
+
+Signup, sign-in, password resets, password changes and Google OAuth all happen
+in Supabase from the browser — this API never sees a password.
 
 </details>
 
@@ -356,8 +353,7 @@ Base URL: `/api`. All routes require `Authorization: Bearer <token>` unless mark
 | DELETE | `/team/:memberId` | Remove member (admin) |
 | GET | `/billing/plans` | **Public.** Plan catalogue |
 | GET | `/billing/subscription` | Current plan, limits and usage |
-| POST | `/billing/checkout` | Stripe Checkout session |
-| POST | `/billing/webhook` | **Public.** Stripe webhook (signature-verified) |
+| POST | `/billing/checkout` | Returns 501 — no payment provider is connected |
 | GET | `/billing/usage` | Month-to-date usage by type |
 | GET | `/admin/{orgs,users,stats,templates}` | Superadmin only |
 
@@ -433,7 +429,7 @@ The assistant is an agentic layer over the CRM, implemented with Claude tool-use
    `status = active`, `nextRunAt <= now`, **and the parent campaign is `active`**.
 2. For each one it renders the current step — `{{companyName}}`, `{{contactName}}`, `{{city}}` and
    any other lead field are substituted — and writes a `Message` row.
-3. Email steps are sent over SMTP with a tracking pixel appended. Other channels are recorded as
+3. Email steps are sent over Resend with a tracking pixel appended. Other channels are recorded as
    drafts so the sequence still advances and the work stays visible.
 4. On success it increments the campaign's `sentCount`, the org's email credits, and writes a
    `UsageLog` row and a lead activity.
@@ -446,7 +442,7 @@ Design notes worth knowing:
   page, or `PATCH /api/campaigns/:id/status`.
 - **Sequences advance even when a send fails**, so one bad email address cannot wedge a lead
   forever. Failures are recorded on the message row.
-- **Without SMTP configured, nothing is sent** — messages are logged to the console and marked as
+- **Without `RESEND_API_KEY` configured, nothing is sent** — messages are logged to the console and marked as
   not sent. Safe to develop against.
 - **Overlapping ticks are guarded**, and a step that throws backs that single enrollment off by
   15 minutes rather than spinning the loop.
@@ -457,12 +453,74 @@ To smoke-test a multi-day sequence in a couple of minutes, set `CAMPAIGN_DAY_MS=
 
 ## Deployment
 
-Dockerfiles are included for both services.
+Both services run **natively on Cloudflare Workers** — no containers, no VMs.
+
+| Service | How it runs |
+| --- | --- |
+| `frontend` | Next.js on Workers via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare), with an R2 bucket for the incremental cache |
+| `backend` | Hono on Workers. Prisma talks to Neon over HTTP via `@prisma/adapter-neon` |
+| database | Neon Postgres (external, serverless) |
+| files | R2 bucket bound as `ATTACHMENTS` |
+| email | Resend HTTPS API |
+| scheduler | Workers Cron Trigger, every minute |
+
+Running on Workers rather than a Node server meant replacing everything that
+assumes a long-lived process with a filesystem:
+
+| Express build | Workers build | Why |
+| --- | --- | --- |
+| Express | Hono | Workers has no Node HTTP server |
+| `jsonwebtoken` | `jose` | WebCrypto instead of Node crypto internals |
+| `bcryptjs` hashing | Supabase Auth | bcrypt cost 12 burns ~1s CPU; Workers Free allows 10ms |
+| `nodemailer` (SMTP) | Resend HTTP API | Workers cannot open raw TCP sockets |
+| `multer` + `fs` | R2 bucket | No filesystem |
+| `express-rate-limit` | Workers rate-limit binding | In-process counters don't exist |
+| `setInterval` scheduler | Cron Trigger | An isolate doesn't outlive its request |
+| Prisma engine over TCP | `@prisma/adapter-neon` | Driver adapter speaks HTTP |
+| module-level `prisma` | `AsyncLocalStorage` context | `env` only exists per request |
+
+Identity moved out to Supabase, so existing password hashes did not survive the
+migration — users sign up again, and their first sign-in links to the CRM row
+that already carries their email.
+
+### First-time setup
 
 ```bash
-docker build -t crm-ai-backend  ./backend
-docker build -t crm-ai-frontend ./frontend
+# 1. Log in, create the R2 buckets, and set secrets interactively
+./scripts/setup-cloudflare.sh
+
+# 2. Point the configs at your real domains
+#    backend/wrangler.jsonc  → vars.FRONTEND_URL, vars.PUBLIC_API_URL
+#    frontend/wrangler.jsonc → vars.NEXT_PUBLIC_API_URL
+
+# 3. Apply the schema to Neon
+cd backend
+export DATABASE_URL='postgresql://...'   # pooled Neon URL
+npx prisma migrate deploy
 ```
+
+### Deploying
+
+```bash
+export DATABASE_URL='postgresql://...'
+export NEXT_PUBLIC_API_URL='https://api.yourdomain.com'
+
+./scripts/deploy.sh          # both services
+./scripts/deploy.sh api      # backend only
+./scripts/deploy.sh web      # frontend only
+ENV=staging ./scripts/deploy.sh
+```
+
+`NEXT_PUBLIC_API_URL` is inlined into the frontend bundle at build time, so it
+must be exported before `deploy.sh web`; setting it only in `wrangler.jsonc`
+would ship the placeholder value.
+
+### Cost
+
+Everything fits inside the Workers **free tier** (100k requests/day) except
+outbound email. There is no always-on compute to pay for — Workers bills per
+request, R2 gives 10 GB free, and Neon has a free tier. Resend is free to
+3,000 emails/month.
 
 Production checklist:
 
@@ -470,10 +528,10 @@ Production checklist:
 - [ ] Set `FRONTEND_URL` to the real origin — it drives CORS
 - [ ] Set `PUBLIC_API_URL` so open-tracking pixels resolve
 - [ ] Run `prisma migrate deploy` rather than `db push`
-- [ ] Point the Stripe webhook at `POST /api/billing/webhook` and set `STRIPE_WEBHOOK_SECRET`
-- [ ] Move attachment storage off local disk (S3 or similar) if you run more than one instance —
-      uploads currently write to `UPLOAD_DIR` on the local filesystem
-- [ ] Run the scheduler on exactly one instance, or set `CAMPAIGN_SCHEDULER=off` on the others
+- [ ] Use the **pooled** Neon connection string for `DATABASE_URL`
+- [ ] Set `RESEND_API_KEY` and verify your sending domain, or no mail goes out
+- [ ] Set `INBOUND_WEBHOOK_SECRET` and point your inbound-email provider at
+      `POST /api/webhooks/inbound-email` if you want reply tracking
 - [ ] Review [Known gaps](#known-gaps) below
 
 ---
@@ -483,16 +541,23 @@ Production checklist:
 Being upfront about what is not done yet:
 
 - **No automated tests** and no CI pipeline.
-- **Reply tracking is not wired.** `replyCount` stays at zero — it needs inbound email handling
-  (IMAP polling or an inbound webhook). Open tracking does work.
-- **WhatsApp / LinkedIn / SMS steps are recorded but not delivered.** Only email actually sends.
-- **Attachments are stored on local disk**, which does not survive horizontal scaling or most
-  container restarts. Move to S3 (or similar) for multi-instance deploys.
-- **No structured logging or request IDs** — `morgan` only.
+- **Reply tracking needs a provider.** The plumbing is in place — `POST /api/webhooks/inbound-email`
+  records replies, bumps `replyCount` once per lead per campaign, and halts the sequence — but you
+  must point an inbound-parse provider at it and set `INBOUND_WEBHOOK_SECRET`. Reps can also log
+  replies by hand from a lead's Messages tab.
+- **AI-generated leads are unverified.** `POST /leads/generate` returns *suggestions* the model
+  invented; they are not saved until a human approves them via `POST /leads/suggestions/approve`.
+  Treat the contact details as guesses to verify, not sourced data.
+- **LinkedIn / SMS steps are recorded but not delivered.** Only email actually sends.
+- **Rate limits are per-colo, not global.** Cloudflare's rate-limit binding keeps counters on the
+  machine serving the request, so a distributed client sees a higher effective ceiling. It blunts
+  abuse; it is not an accounting system. The auth limiter is also 5/minute rather than the old
+  10/15-minutes, because the binding only supports 10s and 60s windows.
+- **No automated tests** and no CI pipeline.
+- **No structured logging or request IDs** — Hono's logger only.
 
 Already handled: rate limiting (auth, AI and global limiters), plan-limit enforcement on
-lead/AI/email actions, raw-body Stripe webhook verification, graceful shutdown, and startup env
-validation.
+lead/AI/email actions, and cross-tenant scoping on every query.
 
 ---
 
@@ -502,11 +567,15 @@ validation.
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Dev server with hot reload |
-| `npm run build` | Compile TypeScript to `dist/` |
-| `npm start` | Run the compiled build |
+| `npm run dev` | Run the Worker locally (`wrangler dev`) |
+| `npm run typecheck` | Type-check |
+| `npm run build` | Bundle without deploying (dry run) |
+| `npm run deploy` | Deploy to production |
+| `npm run deploy:staging` | Deploy to staging |
+| `npm run tail` | Stream production logs |
 | `npm run prisma:push` | Push schema without a migration |
 | `npm run prisma:migrate` | Create and apply a migration |
+| `npm run prisma:deploy` | Apply pending migrations (production) |
 | `npm run seed` | Seed demo data |
 
 **Frontend**
@@ -517,3 +586,13 @@ validation.
 | `npm run build` | Production build |
 | `npm start` | Serve the production build |
 | `npm run lint` | ESLint |
+| `npm run cf:build` | Build the Cloudflare Worker bundle |
+| `npm run cf:preview` | Build and preview the Worker locally |
+| `npm run cf:deploy` | Build and deploy to Cloudflare |
+
+**Root**
+
+| Command | Description |
+| --- | --- |
+| `./scripts/setup-cloudflare.sh` | One-time Cloudflare setup (R2 buckets, secrets) |
+| `./scripts/deploy.sh [api\|web\|all]` | Deploy to Cloudflare |

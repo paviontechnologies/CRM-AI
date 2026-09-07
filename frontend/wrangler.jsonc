@@ -1,0 +1,67 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "crm-ai-web",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-16",
+  // nodejs_compat is required by the Next.js runtime shims.
+  // global_fetch_strictly_public makes fetches to our own domain go through the
+  // public internet path, matching how Next expects them to resolve.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "services": [
+    {
+      // Self-reference used by the cache layer — must match "name" above.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "crm-ai-web"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      // Create first: npx wrangler r2 bucket create crm-ai-web-cache
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "crm-ai-web-cache"
+    }
+  ],
+
+  "images": {
+    "binding": "IMAGES"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // NEXT_PUBLIC_* is inlined at build time, so the real value must be exported
+  // as an env var before `opennextjs-cloudflare build` (scripts/deploy.sh does
+  // this). Kept here so wrangler dev and the deployed Worker agree on a default.
+  "vars": {
+    "NEXT_PUBLIC_API_URL": "https://crm-ai-api.rahul-bajediyal.workers.dev/api"
+  },
+
+  "env": {
+    "staging": {
+      "name": "crm-ai-web-staging",
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "crm-ai-web-staging"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "crm-ai-web-staging-cache"
+        }
+      ],
+      "vars": {
+        "NEXT_PUBLIC_API_URL": "https://crm-ai-api-staging.rahul-bajediyal.workers.dev/api"
+      }
+    }
+  }
+}

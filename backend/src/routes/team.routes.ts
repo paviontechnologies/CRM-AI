@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getTeam,
   inviteMember,
@@ -7,11 +7,14 @@ import {
   removeMember
 } from '../controllers/team.controller';
 import { authenticate, requireRole } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
+// Public: the invitee has no session yet.
 router.post('/accept/:token', acceptInvite);
-router.use(authenticate);
+
+router.use('*', authenticate);
 router.get('/', getTeam);
 router.post('/invite', requireRole(['ADMIN', 'SUPERADMIN']), inviteMember);
 router.patch('/:memberId/role', requireRole(['ADMIN', 'SUPERADMIN']), updateMemberRole);

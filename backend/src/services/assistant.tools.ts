@@ -102,7 +102,7 @@ export const toolDefinitions = [
       properties: {
         leadId: { type: 'string' },
         companyName: { type: 'string', description: 'Used if leadId is not provided.' },
-        channel: { type: 'string', enum: ['email', 'whatsapp', 'linkedin', 'sms'], description: 'Default email.' }
+        channel: { type: 'string', enum: ['email', 'linkedin', 'sms'], description: 'Default email.' }
       }
     }
   },
@@ -335,15 +335,28 @@ const handlers: Record<string, Handler> = {
     const lead = await resolveLead(ctx.orgId, input.leadId, input.companyName);
     if (!lead) return { ok: false, summary: 'No matching lead found.' };
     const org = await prisma.organization.findUnique({ where: { id: ctx.orgId }, select: { aiQualificationPrompt: true } });
-    const analysis = await aiService.scoreLeadIntent(
-      { companyName: lead.companyName, industry: lead.industry, city: lead.city, website: lead.website, source: lead.source, techStack: lead.techStack, employeeSize: lead.employeeSize },
-      org?.aiQualificationPrompt
-    );
+    const [base, behavior] = await Promise.all([
+      aiService.scoreLeadIntent(
+        { companyName: lead.companyName, industry: lead.industry, city: lead.city, website: lead.website, source: lead.source, techStack: lead.techStack, employeeSize: lead.employeeSize },
+        org?.aiQualificationPrompt
+      ),
+      aiService.collectLeadBehavior(lead.id, ctx.orgId)
+    ]);
+    const baseReasons: string[] = Array.isArray(base.reasons) ? base.reasons : [String(base.reasons)];
+    const adjusted = behavior
+      ? aiService.applyBehavioralSignals(base.intentScore, behavior)
+      : { intentScore: base.intentScore, reasons: [] };
+    const analysis = {
+      ...base,
+      intentScore: adjusted.intentScore,
+      reasons: [...baseReasons, ...adjusted.reasons],
+      behavior
+    };
     await prisma.leadScore.create({
       data: {
         leadId: lead.id, score: analysis.intentScore, icpScore: analysis.icpScore,
         urgency: analysis.urgency, budgetScore: analysis.budgetScore,
-        reasons: Array.isArray(analysis.reasons) ? analysis.reasons.join(' | ') : String(analysis.reasons),
+        reasons: analysis.reasons.join(' | '),
         recommendation: analysis.recommendation
       }
     });

@@ -96,20 +96,20 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-        className="relative text-slate-400 hover:text-slate-600 transition-colors"
+        className="relative text-faint hover:text-muted transition-colors"
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 bg-red-500 text-onaccent text-[10px] font-semibold rounded-full flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-80 bg-surface rounded-2xl border border-line shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b">
-            <span className="font-bold text-sm text-slate-900">Notifications</span>
+            <span className="font-semibold text-sm text-ink">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAll}
@@ -122,28 +122,28 @@ export function NotificationBell() {
 
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-10">You are all caught up.</p>
+              <p className="text-sm text-faint text-center py-10">You are all caught up.</p>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
                   className={`flex items-start gap-2 px-4 py-3 border-b border-slate-50 last:border-0 group transition-colors ${
-                    n.read ? 'bg-white' : 'bg-brand-50/60'
-                  } ${n.link ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                    n.read ? 'bg-surface' : 'bg-brand-50/60'
+                  } ${n.link ? 'cursor-pointer hover:bg-subtle' : ''}`}
                   onClick={() => handleOpen(n)}
                 >
                   {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-brand-500 mt-1.5 flex-shrink-0" />}
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                    {n.body && <p className="text-xs text-slate-500 mt-0.5 truncate">{n.body}</p>}
-                    <p className="text-xs text-slate-400 mt-1">{timeAgo(n.createdAt)}</p>
+                    <p className="text-sm font-medium text-ink">{n.title}</p>
+                    {n.body && <p className="text-xs text-muted mt-0.5 truncate">{n.body}</p>}
+                    <p className="text-xs text-faint mt-1">{timeAgo(n.createdAt)}</p>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(n.id, !n.read);
                     }}
-                    className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="text-faint hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

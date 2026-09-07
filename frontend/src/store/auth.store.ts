@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -12,9 +13,11 @@ interface Org {
   id: string;
   name: string;
   slug: string;
-  subscription: string;
-  usedLeadCredits: number;
-  planCredits: number;
+  // The session exchange returns identity only; these are filled in by the
+  // /auth/me call the dashboard layout makes on mount.
+  subscription?: string;
+  usedLeadCredits?: number;
+  planCredits?: number;
 }
 
 interface AuthState {
@@ -22,7 +25,7 @@ interface AuthState {
   user: User | null;
   org: Org | null;
   role: string | null;
-  setAuth: (token: string, user: User, org: Org, role: string) => void;
+  setAuth: (token: string, user: User, org: Org | null, role: string) => void;
   logout: () => void;
 }
 
@@ -39,6 +42,9 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         localStorage.removeItem('token');
+        // Without this the Supabase session survives and the next /login visit
+        // would sign the user straight back in.
+        void supabase.auth.signOut();
         set({ token: null, user: null, org: null, role: null });
       },
     }),

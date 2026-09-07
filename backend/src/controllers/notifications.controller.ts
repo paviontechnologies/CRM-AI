@@ -1,75 +1,56 @@
-import { Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
+import type { AppContext } from '../types';
 
-export const getNotifications = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user!.userId;
-    const orgId = req.user!.orgId;
-    const { unreadOnly, limit = '30' } = req.query as Record<string, string>;
+export const getNotifications = async (c: AppContext) => {
+  const { userId, orgId } = c.get('user');
+  const unreadOnly = c.req.query('unreadOnly');
+  const limit = c.req.query('limit') || '30';
 
-    const where = {
-      userId,
-      organizationId: orgId,
-      ...(unreadOnly === 'true' && { read: false })
-    };
+  const where = {
+    userId,
+    organizationId: orgId,
+    ...(unreadOnly === 'true' && { read: false })
+  };
 
-    const [notifications, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: Math.min(100, Math.max(1, parseInt(limit, 10) || 30))
-      }),
-      prisma.notification.count({ where: { userId, organizationId: orgId, read: false } })
-    ]);
+  const [notifications, unreadCount] = await Promise.all([
+    prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(100, Math.max(1, parseInt(limit, 10) || 30))
+    }),
+    prisma.notification.count({ where: { userId, organizationId: orgId, read: false } })
+  ]);
 
-    res.status(200).json({ notifications, unreadCount });
-  } catch (error) {
-    console.error('Get notifications error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  return c.json({ notifications, unreadCount });
 };
 
-export const markRead = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
+export const markRead = async (c: AppContext) => {
+  const { userId, orgId } = c.get('user');
 
-    // Scoped by userId so one user can't mark another's notifications read.
-    const result = await prisma.notification.updateMany({
-      where: { id, userId: req.user!.userId, organizationId: req.user!.orgId },
-      data: { read: true }
-    });
+  // Scoped by userId so one user can't mark another's notifications read.
+  const result = await prisma.notification.updateMany({
+    where: { id: c.req.param('id'), userId, organizationId: orgId },
+    data: { read: true }
+  });
 
-    if (result.count === 0) return res.status(404).json({ error: 'Notification not found' });
-    res.status(200).json({ message: 'Marked as read' });
-  } catch (error) {
-    console.error('Mark notification read error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  if (result.count === 0) return c.json({ error: 'Notification not found' }, 404);
+  return c.json({ message: 'Marked as read' });
 };
 
-export const markAllRead = async (req: AuthRequest, res: Response) => {
-  try {
-    const result = await prisma.notification.updateMany({
-      where: { userId: req.user!.userId, organizationId: req.user!.orgId, read: false },
-      data: { read: true }
-    });
-    res.status(200).json({ message: 'All marked as read', count: result.count });
-  } catch (error) {
-    console.error('Mark all read error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+export const markAllRead = async (c: AppContext) => {
+  const { userId, orgId } = c.get('user');
+  const result = await prisma.notification.updateMany({
+    where: { userId, organizationId: orgId, read: false },
+    data: { read: true }
+  });
+  return c.json({ message: 'All marked as read', count: result.count });
 };
 
-export const deleteNotification = async (req: AuthRequest, res: Response) => {
-  try {
-    const result = await prisma.notification.deleteMany({
-      where: { id: req.params.id, userId: req.user!.userId, organizationId: req.user!.orgId }
-    });
-    if (result.count === 0) return res.status(404).json({ error: 'Notification not found' });
-    res.status(200).json({ message: 'Notification deleted' });
-  } catch (error) {
-    console.error('Delete notification error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+export const deleteNotification = async (c: AppContext) => {
+  const { userId, orgId } = c.get('user');
+  const result = await prisma.notification.deleteMany({
+    where: { id: c.req.param('id'), userId, organizationId: orgId }
+  });
+  if (result.count === 0) return c.json({ error: 'Notification not found' }, 404);
+  return c.json({ message: 'Notification deleted' });
 };

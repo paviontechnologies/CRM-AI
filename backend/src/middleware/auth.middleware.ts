@@ -1,30 +1,34 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { createMiddleware } from 'hono/factory';
+import { verifyToken } from '../lib/jwt';
+import type { AppBindings, AuthUser } from '../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_in_prod';
-
-export interface AuthRequest extends Request {
-  user?: { userId: string; email: string; orgId: string; role: string };
-}
-
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+export const authenticate = createMiddleware<AppBindings>(async (c, next) => {
+  const authHeader = c.req.header('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return c.json({ error: 'Unauthorized' }, 401);
   }
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    req.user = decoded;
-    next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
 
-export const requireRole = (roles: string[]) => (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!req.user || !roles.includes(req.user.role)) {
-    return res.status(403).json({ error: 'Forbidden' });
+  const claims = await verifyToken<AuthUser & { type?: string }>(authHeader.slice(7));
+  // Legacy refresh tokens carried type:'refresh' and no org/role. This API no
+  // longer issues them, but one must never open the API if it turns up.
+  if (!claims || claims.type === 'refresh' || !claims.userId || !claims.orgId) {
+    return c.json({ error: 'Invalid token' }, 401);
   }
-  next();
-};
+
+  c.set('user', {
+    userId: claims.userId,
+    email: claims.email,
+    orgId: claims.orgId,
+    role: claims.role
+  });
+  await next();
+});
+
+export const requireRole = (roles: string[]) =>
+  createMiddleware<AppBindings>(async (c, next) => {
+    const user = c.get('user');
+    if (!user || !roles.includes(user.role)) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+    await next();
+  });

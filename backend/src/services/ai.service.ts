@@ -1,18 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
-import dotenv from 'dotenv';
-dotenv.config();
+import { prisma } from '../lib/prisma';
+import { getEnv } from '../lib/context';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+// The key lives in the per-request env, not process.env, so both the client and
+// the "is it configured" check are resolved at call time rather than at import.
+const apiKey = (): string => getEnv().ANTHROPIC_API_KEY || '';
 
-const HAS_KEY = !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY.length > 10);
+export const hasApiKey = (): boolean => apiKey().length > 10;
+
+const client = (): Anthropic => new Anthropic({ apiKey: apiKey() });
 
 // Shared system prompt cached at API level for efficiency
 const SYSTEM_PROMPT = `You are an expert B2B sales intelligence AI. You analyze company data and generate actionable sales insights. Always respond with valid JSON only — no markdown, no explanation text, just the raw JSON object.`;
 
 async function askClaude(userPrompt: string): Promise<any> {
-  const msg = await anthropic.messages.create({
+  const msg = await client().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
@@ -40,7 +42,7 @@ export const scoreLeadIntent = async (
   /** Org-specific ICP instructions from Organization.aiQualificationPrompt. */
   qualificationPrompt?: string | null
 ) => {
-  if (!HAS_KEY) {
+  if (!hasApiKey()) {
     const score = Math.floor(Math.random() * 40) + 60;
     return {
       intentScore: score,
@@ -86,6 +88,144 @@ Return exactly this JSON structure:
   }
 };
 
+// ─── AI Lead Scoring WITH Behavioral Data ────────────────────────────────────
+// This enriches scoring by pulling in Activity, Message, Deal, Task data for
+// a holistic view of lead engagement — not just static company attributes.
+
+export interface BehavioralContext {
+  totalActivities: number;
+  emailsSent: number;
+  emailOpens: number;
+  replies: number;
+  activeDeals: number;
+  openDealValue: number;
+  wonDeals: number;
+  openTasks: number;
+  overdueTasks: number;
+  daysSinceLastActivity: number | null;
+  daysSinceCreated: number;
+}
+
+/**
+ * Collect the engagement signals we hold for a lead. Activity/Message are scoped
+ * through the lead relation (they carry no organizationId of their own), so the
+ * org check happens on the Lead row and the nested `lead: { organizationId }`
+ * filter — never trust leadId alone.
+ */
+export const collectLeadBehavior = async (
+  leadId: string,
+  orgId: string
+): Promise<BehavioralContext | null> => {
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, organizationId: orgId },
+    select: { id: true, createdAt: true }
+  });
+  if (!lead) return null;
+
+  const now = Date.now();
+  const DAY_MS = 86_400_000;
+
+  const [activities, messages, deals, tasks] = await Promise.all([
+    prisma.activity.findMany({
+      where: { leadId, lead: { organizationId: orgId } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { type: true, createdAt: true }
+    }),
+    prisma.message.findMany({
+      where: { leadId, lead: { organizationId: orgId } },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: { direction: true, status: true }
+    }),
+    prisma.deal.findMany({
+      where: { leadId, organizationId: orgId },
+      select: { status: true, value: true }
+    }),
+    prisma.task.findMany({
+      where: { leadId, organizationId: orgId, status: { not: 'completed' } },
+      select: { dueDate: true }
+    })
+  ]);
+
+  const outbound = messages.filter((m) => m.direction === 'outbound');
+  const openDeals = deals.filter((d) => d.status === 'open');
+
+  return {
+    totalActivities: activities.length,
+    emailsSent: outbound.filter((m) => m.status === 'sent' || m.status === 'opened').length,
+    // 'opened' is terminal in the pixel handler, so it also counts as delivered.
+    emailOpens: messages.filter((m) => m.status === 'opened').length,
+    replies: messages.filter((m) => m.direction === 'inbound').length,
+    activeDeals: openDeals.length,
+    openDealValue: openDeals.reduce((sum, d) => sum + d.value, 0),
+    wonDeals: deals.filter((d) => d.status === 'won').length,
+    openTasks: tasks.length,
+    overdueTasks: tasks.filter((t) => t.dueDate && t.dueDate.getTime() < now).length,
+    daysSinceLastActivity: activities.length
+      ? Math.floor((now - activities[0].createdAt.getTime()) / DAY_MS)
+      : null,
+    daysSinceCreated: Math.floor((now - lead.createdAt.getTime()) / DAY_MS)
+  };
+};
+
+/**
+ * Turn engagement counts into a deterministic −20…+30 adjustment plus the
+ * human-readable reasons behind it. Kept out of the LLM on purpose: these are
+ * facts we hold, so they should score the same way every run.
+ */
+export const applyBehavioralSignals = (
+  baseIntent: number,
+  b: BehavioralContext
+): { intentScore: number; reasons: string[] } => {
+  let delta = 0;
+  const reasons: string[] = [];
+
+  if (b.replies > 0) {
+    delta += 20;
+    reasons.push(`Replied ${b.replies} time${b.replies > 1 ? 's' : ''} — direct interest confirmed.`);
+  }
+  if (b.emailOpens >= 3) {
+    delta += 10;
+    reasons.push(`Opened ${b.emailOpens} emails — consistently engaging with outreach.`);
+  } else if (b.emailOpens > 0) {
+    delta += 5;
+    reasons.push(`Opened ${b.emailOpens} email${b.emailOpens > 1 ? 's' : ''}.`);
+  } else if (b.emailsSent >= 3) {
+    delta -= 10;
+    reasons.push(`${b.emailsSent} emails sent with no opens — not engaging.`);
+  }
+
+  if (b.activeDeals > 0) {
+    delta += 10;
+    reasons.push(`${b.activeDeals} open deal${b.activeDeals > 1 ? 's' : ''} worth ${Math.round(b.openDealValue).toLocaleString()}.`);
+  }
+  if (b.wonDeals > 0) {
+    delta += 5;
+    reasons.push(`Existing customer — ${b.wonDeals} deal${b.wonDeals > 1 ? 's' : ''} already won.`);
+  }
+  if (b.overdueTasks > 0) {
+    reasons.push(`${b.overdueTasks} overdue task${b.overdueTasks > 1 ? 's' : ''} on this lead — follow-up is slipping.`);
+  }
+
+  if (b.daysSinceLastActivity === null && b.daysSinceCreated > 14) {
+    delta -= 10;
+    reasons.push(`No activity in ${b.daysSinceCreated} days since the lead was created.`);
+  } else if (b.daysSinceLastActivity !== null && b.daysSinceLastActivity > 30) {
+    delta -= 15;
+    reasons.push(`Silent for ${b.daysSinceLastActivity} days — going cold.`);
+  } else if (b.daysSinceLastActivity !== null && b.daysSinceLastActivity <= 3 && b.totalActivities >= 3) {
+    delta += 5;
+    reasons.push('Active in the last few days — momentum is live.');
+  }
+
+  const clampedDelta = Math.max(-20, Math.min(30, delta));
+  return {
+    intentScore: Math.max(1, Math.min(100, Math.round(baseIntent + clampedDelta))),
+    reasons
+  };
+};
+
 // ─── Outreach Generation ────────────────────────────────────────────────────
 
 export const generateOutreach = async (
@@ -97,19 +237,15 @@ export const generateOutreach = async (
     intentScore?: number | null;
     website?: string | null;
   },
-  channel: 'email' | 'whatsapp' | 'linkedin' | 'sms',
+  channel: 'email' | 'linkedin' | 'sms',
   templateType?: string
 ) => {
-  if (!HAS_KEY) {
+  if (!hasApiKey()) {
     const name = leadData.contactName ? ` ${leadData.contactName}` : '';
     const templates: Record<string, { subject: string; body: string }> = {
       email: {
         subject: `Quick question for ${leadData.companyName}`,
         body: `Hi${name},\n\nI noticed ${leadData.companyName} is scaling fast in the ${leadData.industry || 'industry'} space${leadData.city ? ' in ' + leadData.city : ''}.\n\nWe've helped similar companies automate their lead generation and CRM workflows, cutting the sales cycle by 40%.\n\nWould a 15-minute call this week make sense?\n\nBest regards,\n[Your Name]`,
-      },
-      whatsapp: {
-        subject: '',
-        body: `Hi${name}! 👋 I came across ${leadData.companyName} and wanted to reach out. We help ${leadData.industry || 'businesses'} automate their sales workflows with AI. Would love to show you how — interested in a quick 10-min chat?`,
       },
       linkedin: {
         subject: '',
@@ -125,7 +261,6 @@ export const generateOutreach = async (
 
   const channelGuidance: Record<string, string> = {
     email: 'Write a cold sales email with subject line. Keep it under 120 words, conversational, no fluff.',
-    whatsapp: 'Write a short WhatsApp intro message. Max 3 sentences, casual tone, no formal greetings.',
     linkedin: 'Write a LinkedIn connection request note. Max 2 sentences, professional.',
     sms: 'Write an SMS pitch. Max 1 sentence + call to action.',
   };
@@ -179,7 +314,7 @@ export const generateLeads = async (params: {
   const count = Math.min(params.count || 10, 20);
   const country = params.country || 'India';
 
-  if (!HAS_KEY) {
+  if (!hasApiKey()) {
     // Rich mock leads based on industry
     const mockLeads = buildMockLeads(params.industry, params.city, country, count);
     return mockLeads;
@@ -230,11 +365,11 @@ Return exactly this JSON structure:
 // ─── Sequence Generator ─────────────────────────────────────────────────────
 
 export const generateSequence = async (leadData: object, days: number = 7) => {
-  if (!HAS_KEY) {
+  if (!hasApiKey()) {
     return [
       { day: 1, channel: 'email', type: 'intro', subject: 'Quick question', content: 'Day 1 intro email...' },
       { day: 3, channel: 'email', type: 'case_study', subject: 'How similar companies saved 40% time', content: 'Day 3 case study follow-up...' },
-      { day: 5, channel: 'whatsapp', type: 'followup', subject: '', content: 'Hey! Just following up on my email 👋' },
+      { day: 5, channel: 'linkedin', type: 'followup', subject: '', content: 'Following up on my email — worth a quick chat?' },
       { day: 7, channel: 'email', type: 'breakup', subject: 'Last attempt', content: 'I understand if the timing is off...' },
     ];
   }
@@ -265,7 +400,7 @@ function buildMockLeads(industry: string, city: string, country: string, count: 
     Healthcare: [
       { companyName: 'CityHealth Clinic', contactName: 'Dr. Rajesh Sharma', employeeSize: '10-50', notes: 'Uses manual appointment book, needs digital CRM.' },
       { companyName: 'MediCare Hospital', contactName: 'Dr. Priya Nair', employeeSize: '50-200', notes: 'Old HMS system, looking to upgrade.' },
-      { companyName: 'Sunrise Diagnostics', contactName: 'Amit Verma', employeeSize: '10-50', notes: 'Manual report delivery, needs WhatsApp automation.' },
+      { companyName: 'Sunrise Diagnostics', contactName: 'Amit Verma', employeeSize: '10-50', notes: 'Manual report delivery, needs patient follow-up automation.' },
       { companyName: 'Apollo Wellness Center', contactName: 'Dr. Sunita Patel', employeeSize: '10-50', notes: 'No patient follow-up system in place.' },
       { companyName: 'LifeCare Multi-Specialty', contactName: 'Dr. Vikram Singh', employeeSize: '50-200', notes: 'Paper-based billing, looking for ERP.' },
     ],

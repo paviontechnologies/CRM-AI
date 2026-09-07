@@ -1,18 +1,19 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getSubscription,
   getPlans,
   createCheckoutSession,
-  handleWebhook,
   getUsage
 } from '../controllers/billing.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
+// Public route must be declared before the authenticate middleware below.
 router.get('/plans', getPlans);
-router.post('/webhook', handleWebhook as any);
-router.use(authenticate);
+
+router.use('*', authenticate);
 router.get('/subscription', getSubscription);
 router.post('/checkout', createCheckoutSession);
 router.get('/usage', getUsage);

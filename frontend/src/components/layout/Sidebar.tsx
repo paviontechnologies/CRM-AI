@@ -15,7 +15,6 @@ import {
   ListTodo,
   CreditCard,
   Bot,
-  Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { cn } from '@/lib/cn';
@@ -36,8 +35,8 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: 'Growth',
     items: [
       { name: 'Campaigns', href: '/campaigns', icon: Mail },
-      { name: 'AI Templates', href: '/ai-templates', icon: Target },
-      { name: 'AI Qualification', href: '/workflows', icon: Bot },
+      { name: 'Templates', href: '/ai-templates', icon: Target },
+      { name: 'Qualification', href: '/workflows', icon: Bot },
       { name: 'Analytics', href: '/analytics', icon: Activity },
     ],
   },
@@ -69,96 +68,66 @@ export function Sidebar() {
       <Link
         href={item.href}
         className={cn(
-          'group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-          active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
+          'group relative flex items-center gap-3 h-9 px-3 rounded-lg text-sm transition-colors',
+          active ? 'bg-subtle text-ink font-medium' : 'text-muted hover:text-ink hover:bg-subtle/60'
         )}
       >
-        {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-brand-400" />}
-        <item.icon className={cn('w-4 h-4 flex-shrink-0 transition-colors', active ? 'text-brand-300' : 'text-slate-500 group-hover:text-slate-300')} />
+        {/* The active marker is a rule, not a pill — it reads as a position in
+            a list rather than a floating chip. */}
+        {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[2px] rounded-full bg-ink" />}
+        <item.icon className={cn('w-4 h-4 flex-shrink-0', active ? 'text-ink' : 'text-faint group-hover:text-muted')} />
         {item.name}
       </Link>
     );
   };
 
-  return (
-    <aside className="flex h-screen flex-col bg-slate-950 w-64 flex-shrink-0 border-r border-white/5">
-      {/* Brand */}
-      <div className="px-5 h-16 flex items-center border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-[var(--shadow-brand)]">
-            <span className="text-white font-bold text-sm tracking-tight">PT</span>
-          </div>
-          <div className="min-w-0">
-            <div className="text-white font-semibold text-sm leading-tight truncate">
-              {org?.name || 'Pavion'}
-            </div>
-            <div className="text-slate-500 text-xs">Lead Intelligence</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        {groups.map((group) => (
-          <div key={group.label} className="mb-5">
-            <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-              {group.label}
-            </div>
-            <div className="space-y-0.5">
-              {group.items.map((item) => (
-                <NavLink key={item.href} item={item} />
-              ))}
-            </div>
-          </div>
+  const Group = ({ label, items }: { label: string; items: NavItem[] }) => (
+    <div className="mb-6">
+      <div className="px-3 mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-faint">{label}</div>
+      <div className="space-y-0.5">
+        {items.map((item) => (
+          <NavLink key={item.href} item={item} />
         ))}
+      </div>
+    </div>
+  );
 
-        {role === 'SUPERADMIN' && (
-          <div className="mb-5">
-            <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-              Admin
-            </div>
-            <Link
-              href="/admin"
-              className={cn(
-                'group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive('/admin') ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
-              )}
-            >
-              {isActive('/admin') && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-purple-400" />}
-              <Shield className={cn('w-4 h-4', isActive('/admin') ? 'text-purple-300' : 'text-slate-500 group-hover:text-slate-300')} />
-              Admin Panel
-            </Link>
-          </div>
-        )}
-      </nav>
-
-      {/* Quick action */}
-      <div className="px-3 pb-3">
-        <Link
-          href="/leads"
-          className="flex items-center justify-center gap-2 w-full h-10 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl transition-colors shadow-[var(--shadow-brand)]"
-        >
-          <Sparkles className="w-4 h-4" />
-          Generate Leads
+  return (
+    <aside className="flex h-screen flex-col bg-surface w-60 flex-shrink-0 border-r border-line">
+      <div className="px-4 h-14 flex items-center border-b border-line">
+        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+          <span className="w-7 h-7 rounded-md bg-accent text-onaccent grid place-items-center text-[11px] font-semibold flex-shrink-0">
+            PT
+          </span>
+          <span className="font-medium text-sm text-ink truncate">{org?.name || 'Pavion'}</span>
         </Link>
       </div>
 
-      {/* User */}
-      <div className="p-3 border-t border-white/5">
-        <div className="flex items-center gap-3 px-2 py-1.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-700 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-            {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'P'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-white text-xs font-medium truncate">{user?.name || user?.email}</div>
-            <div className="text-slate-500 text-xs truncate capitalize">{role?.toLowerCase() || 'member'}</div>
+      <nav className="flex-1 px-3 py-5 overflow-y-auto">
+        {groups.map((group) => (
+          <Group key={group.label} {...group} />
+        ))}
+
+        {role === 'SUPERADMIN' && (
+          <Group label="Admin" items={[{ name: 'Superadmin', href: '/admin', icon: Shield }]} />
+        )}
+      </nav>
+
+      <div className="border-t border-line p-3">
+        <div className="flex items-center gap-2.5 px-2 py-2">
+          <span className="w-7 h-7 rounded-full bg-subtle border border-line grid place-items-center text-[11px] font-medium text-ink flex-shrink-0">
+            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-ink truncate">{user?.name || 'User'}</p>
+            <p className="text-[11px] text-faint truncate">{role?.toLowerCase() || 'member'}</p>
           </div>
           <button
             onClick={handleLogout}
             aria-label="Sign out"
-            className="text-slate-500 hover:text-red-400 transition-colors flex-shrink-0 p-1.5 rounded-lg hover:bg-white/5"
+            className="w-7 h-7 grid place-items-center rounded-md text-faint hover:text-ink hover:bg-subtle transition-colors flex-shrink-0"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { AssistantWidget } from '@/components/assistant/AssistantWidget';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuthStore } from '@/store/auth.store';
 import { Search } from 'lucide-react';
 import api from '@/lib/api';
@@ -43,25 +44,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen bg-canvas overflow-hidden">
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0">
+        <header className="h-14 bg-canvas/85 backdrop-blur-md border-b border-line flex items-center px-5 gap-3 flex-shrink-0">
           <form
             onSubmit={handleSearch}
-            className="flex-1 flex items-center gap-2.5 max-w-md h-10 px-3.5 rounded-xl bg-slate-100/70 border border-transparent focus-within:bg-white focus-within:border-brand-500 focus-within:shadow-[0_0_0_3px_var(--color-brand-100)] transition-all"
+            className="flex-1 flex items-center gap-2.5 max-w-sm h-9 px-3 rounded-lg border border-line bg-surface focus-within:border-ink transition-colors"
           >
-            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <Search className="w-3.5 h-3.5 text-faint flex-shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search leads…"
-              className="flex-1 text-sm text-slate-700 bg-transparent focus:outline-none placeholder-slate-400"
+              placeholder="Search leads"
+              className="flex-1 text-sm text-ink bg-transparent focus:outline-none placeholder-faint"
             />
-            <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-medium text-slate-400 bg-white border border-slate-200 rounded">↵</kbd>
+            <kbd className="hidden sm:inline-flex items-center h-5 px-1.5 text-[10px] font-medium text-faint border border-line rounded">
+              ↵
+            </kbd>
           </form>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-1.5 ml-auto">
+            <ThemeToggle />
             <NotificationBell />
-            <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-brand-700 rounded-full flex items-center justify-center text-white text-sm font-semibold ring-2 ring-white shadow-sm">
+            <span className="w-8 h-8 rounded-full bg-accent text-onaccent grid place-items-center text-xs font-medium">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
+            </span>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">{children}</main>

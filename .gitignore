@@ -7,12 +7,19 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.dev.vars
+.dev.vars.*
 
 # Build outputs
 dist/
 .next/
 build/
 out/
+
+# Cloudflare
+.open-next/
+.wrangler/
+cloudflare-env.d.ts
 
 # Uploaded attachments (local disk storage)
 uploads/
@@ -33,8 +40,3 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-node_modules
-dist
-backend/.env
-node_modules
-dist

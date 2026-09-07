@@ -1,38 +1,77 @@
-import nodemailer from 'nodemailer';
+import { getEnv } from '../lib/context';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || ''
-  }
-});
+/**
+ * Email delivery over Resend's HTTP API.
+ *
+ * SMTP needs a raw TCP socket, which Workers does not provide, so every send
+ * goes out as an HTTPS request instead. When RESEND_API_KEY is unset the
+ * functions log and return without throwing — same degradation the SMTP build
+ * had, so local runs and unconfigured deploys still work.
+ */
 
-const FROM = () => `"${process.env.SMTP_FROM_NAME || 'AI Lead Gen'}" <${process.env.SMTP_FROM || 'noreply@aileadgen.com'}>`;
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
-export const isEmailConfigured = (): boolean => Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
+export const isEmailConfigured = (): boolean => Boolean(getEnv().RESEND_API_KEY);
 
-export const sendOtpEmail = async (to: string, otp: string, name?: string | null) => {
-  if (!isEmailConfigured()) {
-    console.log(`[DEV] OTP for ${to}: ${otp}`);
-    return;
-  }
-  await transporter.sendMail({
-    from: FROM(),
-    to,
-    subject: 'Verify your email - OTP',
-    html: `<p>Hi ${name || 'there'},</p><p>Your OTP is: <strong>${otp}</strong></p><p>Expires in 15 minutes.</p>`
-  });
+const fromAddress = (): string => {
+  const env = getEnv();
+  const address = env.EMAIL_FROM || 'onboarding@resend.dev';
+  const name = env.EMAIL_FROM_NAME || 'AI Lead Gen';
+  return `${name} <${address}>`;
 };
 
-export const sendInviteEmail = async (to: string, inviteUrl: string, orgName: string) => {
+interface SendInput {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string | null;
+}
+
+/** Returns false when sending was skipped or rejected; never throws. */
+const send = async (input: SendInput): Promise<boolean> => {
+  const env = getEnv();
+  if (!env.RESEND_API_KEY) {
+    console.log(`[DEV] email to ${input.to} — "${input.subject}" (RESEND_API_KEY unset, not sent)`);
+    return false;
+  }
+
+  try {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: fromAddress(),
+        to: [input.to],
+        subject: input.subject,
+        html: input.html,
+        ...(input.text && { text: input.text }),
+        ...(input.replyTo && { reply_to: input.replyTo })
+      })
+    });
+
+    if (!res.ok) {
+      // Read the body for the reason — Resend returns a JSON error object.
+      const detail = await res.text().catch(() => '');
+      console.error(`Resend rejected mail to ${input.to} (${res.status}): ${detail}`);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(`Email to ${input.to} failed:`, error);
+    return false;
+  }
+};
+
+export const sendInviteEmail = async (to: string, inviteUrl: string, orgName: string): Promise<void> => {
   if (!isEmailConfigured()) {
     console.log(`[DEV] Invite URL for ${to}: ${inviteUrl}`);
     return;
   }
-  await transporter.sendMail({
-    from: FROM(),
+  await send({
     to,
     subject: `You've been invited to join ${orgName}`,
     html: `<p>You've been invited to join <strong>${orgName}</strong> on AI Lead Gen.</p><p><a href="${inviteUrl}">Accept Invite</a></p><p>Link expires in 7 days.</p>`
@@ -49,33 +88,21 @@ interface CampaignEmailInput {
 }
 
 /**
- * Send one campaign email. Returns false when sending was skipped or failed so the
- * caller can decide whether to advance the sequence.
+ * Send one campaign email. Returns false when sending was skipped or failed so
+ * the caller can decide whether to advance the sequence.
  */
 export const sendCampaignEmail = async (input: CampaignEmailInput): Promise<boolean> => {
-  const apiUrl = process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5001}`;
+  const apiUrl = getEnv().PUBLIC_API_URL;
   const pixel = `<img src="${apiUrl}/api/campaigns/track/${input.messageId}/open.gif" width="1" height="1" alt="" style="display:none" />`;
 
   // Plain-text bodies come from the AI/template editor — preserve line breaks.
   const html = `${input.body.replace(/\n/g, '<br />')}${pixel}`;
 
-  if (!isEmailConfigured()) {
-    console.log(`[DEV] Campaign email to ${input.to} — "${input.subject}" (SMTP not configured, not sent)`);
-    return false;
-  }
-
-  try {
-    await transporter.sendMail({
-      from: FROM(),
-      to: input.to,
-      subject: input.subject,
-      html,
-      text: input.body,
-      ...(input.replyTo && { replyTo: input.replyTo })
-    });
-    return true;
-  } catch (error) {
-    console.error(`Campaign email to ${input.to} failed:`, error);
-    return false;
-  }
+  return send({
+    to: input.to,
+    subject: input.subject,
+    html,
+    text: input.body,
+    replyTo: input.replyTo
+  });
 };

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getCampaigns,
   getCampaign,
@@ -12,13 +12,14 @@ import {
   trackOpen
 } from '../controllers/campaigns.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import type { AppBindings } from '../types';
 
-const router = Router();
+const router = new Hono<AppBindings>();
 
 // Public: hit by the recipient's mail client, so it must sit above authenticate.
 router.get('/track/:messageId/open.gif', trackOpen);
 
-router.use(authenticate);
+router.use('*', authenticate);
 router.get('/', getCampaigns);
 router.get('/:id', getCampaign);
 router.post('/', createCampaign);

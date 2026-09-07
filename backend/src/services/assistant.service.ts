@@ -1,8 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { toolDefinitions, executeTool, ToolContext } from './assistant.tools';
+import { getEnv } from '../lib/context';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
-const HAS_KEY = !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY.length > 10);
+// Resolved per request: on Workers the key lives in env, not process.env.
+const apiKey = () => getEnv().ANTHROPIC_API_KEY || '';
+const hasApiKey = () => apiKey().length > 10;
+const client = () => new Anthropic({ apiKey: apiKey() });
 const MODEL = 'claude-haiku-4-5-20251001';
 const MAX_TURNS = 6; // hard cap on tool-call rounds per request
 
@@ -44,7 +47,7 @@ export const runAssistant = async (
   ctx: ToolContext,
   userName: string
 ): Promise<AssistantReply> => {
-  if (!HAS_KEY) {
+  if (!hasApiKey()) {
     return {
       reply:
         "The AI assistant isn't configured yet — set ANTHROPIC_API_KEY on the server to enable it. Once it's set, I can search leads, score them, draft outreach, create tasks and deals, and more, just by asking.",
@@ -59,7 +62,7 @@ export const runAssistant = async (
   const actions: AssistantAction[] = [];
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
-    const response = await anthropic.messages.create({
+    const response = await client().messages.create({
       model: MODEL,
       max_tokens: 1500,
       system: systemPrompt(userName),

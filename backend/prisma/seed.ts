@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -17,7 +16,7 @@ const STAGES = [
 const LEADS = [
   { companyName: 'CityHealth Clinic', contactName: 'Dr. Rajesh Sharma', email: 'rajesh@cityhealthclinic.com', phone: '+91-9876543210', website: 'https://www.cityhealthclinic.com', industry: 'Healthcare', city: 'Mumbai', country: 'India', employeeSize: '10-50', source: 'ai_generated', status: 'QUALIFIED', intentScore: 85, icpScore: 78, notes: 'Uses manual appointment book, needs digital CRM.' },
   { companyName: 'MediCare Hospital', contactName: 'Dr. Priya Nair', email: 'priya@medicarehospital.com', phone: '+91-9812345670', website: 'https://www.medicarehospital.com', industry: 'Healthcare', city: 'Mumbai', country: 'India', employeeSize: '50-200', source: 'ai_generated', status: 'CONTACTED', intentScore: 91, icpScore: 88, notes: 'Old HMS system, looking to upgrade.' },
-  { companyName: 'Sunrise Diagnostics', contactName: 'Amit Verma', email: 'amit@sunrisediagnostics.com', phone: '+91-9822334455', website: 'https://www.sunrisediagnostics.com', industry: 'Healthcare', city: 'Pune', country: 'India', employeeSize: '10-50', source: 'import', status: 'NEW', intentScore: 62, notes: 'Manual report delivery, needs WhatsApp automation.' },
+  { companyName: 'Sunrise Diagnostics', contactName: 'Amit Verma', email: 'amit@sunrisediagnostics.com', phone: '+91-9822334455', website: 'https://www.sunrisediagnostics.com', industry: 'Healthcare', city: 'Pune', country: 'India', employeeSize: '10-50', source: 'import', status: 'NEW', intentScore: 62, notes: 'Manual report delivery, needs patient follow-up automation.' },
   { companyName: 'Spice Garden Restaurant', contactName: 'Rahul Mehta', email: 'rahul@spicegarden.com', phone: '+91-9833445566', website: 'https://www.spicegarden.com', industry: 'Restaurant', city: 'Delhi', country: 'India', employeeSize: '10-50', source: 'manual', status: 'NEW', notes: 'No online ordering, losing delivery revenue.' },
   { companyName: 'Biryani House', contactName: 'Salim Khan', email: 'salim@biryanihouse.com', phone: '+91-9844556677', website: 'https://www.biryanihouse.com', industry: 'Restaurant', city: 'Hyderabad', country: 'India', employeeSize: '10-50', source: 'manual', status: 'REPLIED', intentScore: 74, notes: 'No QR menu, manual order taking.' },
   { companyName: 'FastMove Logistics', contactName: 'Arun Kumar', email: 'arun@fastmovelogistics.com', phone: '+91-9855667788', website: 'https://www.fastmovelogistics.com', industry: 'Logistics', city: 'Chennai', country: 'India', employeeSize: '50-200', source: 'ai_generated', status: 'MEETING_BOOKED', intentScore: 88, icpScore: 82, notes: 'Manual tracking, no real-time GPS dashboard.' },
@@ -43,17 +42,16 @@ async function main() {
     await prisma.user.deleteMany({ where: { email: { in: ['demo@demo.com', 'admin@demo.com'] } } });
   }
 
-  const passwordHash = await bcrypt.hash('Demo1234!', 12);
 
   const org = await prisma.organization.create({
     data: { name: 'Demo Inc', slug: 'demo-inc' }
   });
 
   const demoUser = await prisma.user.create({
-    data: { email: 'demo@demo.com', passwordHash, name: 'Demo Admin', isVerified: true, source: 'seed' }
+    data: { email: 'demo@demo.com', name: 'Demo Admin', isVerified: true, source: 'seed' }
   });
   const superUser = await prisma.user.create({
-    data: { email: 'admin@demo.com', passwordHash, name: 'Super Admin', isVerified: true, source: 'seed' }
+    data: { email: 'admin@demo.com', name: 'Super Admin', isVerified: true, source: 'seed' }
   });
 
   const demoMember = await prisma.teamMember.create({
@@ -159,7 +157,7 @@ async function main() {
     data: { organizationId: org.id, leadId: leads[1].id, authorId: demoUser.id, body: 'Spoke with Dr. Nair — budget approved for Q3, decision committee meets next week.' }
   });
   await prisma.note.create({
-    data: { organizationId: org.id, leadId: leads[9].id, authorId: demoUser.id, body: 'Karan wants multi-branch support and WhatsApp integration in the proposal.' }
+    data: { organizationId: org.id, leadId: leads[9].id, authorId: demoUser.id, body: 'Karan wants multi-branch support and a reporting dashboard in the proposal.' }
   });
 
   // Campaigns
@@ -212,7 +210,7 @@ async function main() {
   // Niche templates
   const templates = [
     { name: 'Clinic Intro Email', niche: 'Healthcare', channel: 'email', subject: 'Digitize {{companyName}} patient follow-ups', content: 'Hi {{contactName}}, we help clinics automate appointment reminders and patient follow-ups...', isDefault: true },
-    { name: 'Restaurant QR Pitch', niche: 'Restaurant', channel: 'whatsapp', subject: null, content: 'Hi {{contactName}}! 👋 We set up QR menus + online ordering for restaurants like {{companyName}} in 48 hours...', isDefault: true },
+    { name: 'Restaurant QR Pitch', niche: 'Restaurant', channel: 'email', subject: 'QR menus + online ordering for {{companyName}}', content: 'Hi {{contactName}}, we set up QR menus and online ordering for restaurants like {{companyName}} in 48 hours...', isDefault: true },
     { name: 'Logistics ERP Intro', niche: 'Logistics', channel: 'email', subject: 'Fleet visibility for {{companyName}}', content: 'Hi {{contactName}}, spreadsheets stop working past 20 vehicles. Here is how we fix that...', isDefault: true }
   ];
   for (const t of templates) {

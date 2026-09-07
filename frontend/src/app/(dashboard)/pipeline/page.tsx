@@ -48,25 +48,25 @@ const formatMoney = (value: number, currency = 'INR') =>
 function DealCard({ deal, dragging }: { deal: Deal; dragging?: boolean }) {
   return (
     <div
-      className={`bg-white border rounded-xl p-3 shadow-sm transition-all ${
-        dragging ? 'border-brand-400 shadow-lg rotate-2' : 'border-slate-200 hover:border-brand-200 hover:shadow-md'
+      className={`bg-surface border rounded-xl p-3 shadow-sm transition-all ${
+        dragging ? 'border-brand-400 shadow-lg rotate-2' : 'border-line hover:border-brand-200 hover:shadow-md'
       }`}
     >
       <div className="flex items-start gap-2">
-        <GripVertical className="w-3.5 h-3.5 text-slate-300 mt-0.5 flex-shrink-0" />
+        <GripVertical className="w-3.5 h-3.5 text-faint mt-0.5 flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-900 leading-tight">{deal.title}</p>
+          <p className="text-sm font-semibold text-ink leading-tight">{deal.title}</p>
           {deal.lead && (
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1 truncate">
+            <p className="text-xs text-faint mt-1 flex items-center gap-1 truncate">
               <Building2 className="w-3 h-3 flex-shrink-0" />
               {deal.lead.companyName}
             </p>
           )}
-          <p className="text-sm font-bold text-slate-800 mt-1.5">
+          <p className="text-sm font-semibold text-ink mt-1.5">
             {formatMoney(deal.value, deal.currency)}
           </p>
           {deal.assignedTo?.user?.name && (
-            <p className="text-xs text-slate-400 mt-1">{deal.assignedTo.user.name}</p>
+            <p className="text-xs text-faint mt-1">{deal.assignedTo.user.name}</p>
           )}
         </div>
       </div>
@@ -125,15 +125,15 @@ function StageColumn({
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: stage.color || '#6b7280' }}
           />
-          <span className="text-sm font-semibold text-slate-800 truncate">{stage.name}</span>
+          <span className="text-sm font-semibold text-ink truncate">{stage.name}</span>
         </div>
-        <span className="text-xs font-bold text-slate-600 bg-white px-1.5 py-0.5 rounded-lg flex-shrink-0">
+        <span className="text-xs font-semibold text-muted bg-surface px-1.5 py-0.5 rounded-lg flex-shrink-0">
           {stage.deals.length}
         </span>
       </div>
 
       {stage.totalValue > 0 && (
-        <div className="text-xs text-slate-500 px-1 mb-2 font-medium">
+        <div className="text-xs text-muted px-1 mb-2 font-medium">
           {formatMoney(stage.totalValue)} in play
         </div>
       )}
@@ -145,8 +145,8 @@ function StageColumn({
         }`}
       >
         {stage.deals.length === 0 && (
-          <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center">
-            <p className="text-xs text-slate-400">Drop a deal here</p>
+          <div className="border-2 border-dashed border-line rounded-xl p-4 text-center">
+            <p className="text-xs text-faint">Drop a deal here</p>
           </div>
         )}
         {stage.deals.map((deal) => (
@@ -214,54 +214,54 @@ function NewDealModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="font-bold text-slate-900">New Deal</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <h3 className="font-semibold text-ink">New Deal</h3>
+          <button onClick={onClose} className="text-faint hover:text-muted">
             <X className="w-4 h-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Deal title</label>
+            <label className="block text-sm font-semibold text-ink mb-1.5">Deal title</label>
             <input
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Apollo Hospitals — HMS rollout"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Value (₹)</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">Value (₹)</label>
               <input
                 type="number"
                 min="0"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="0"
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Close date</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">Close date</label>
               <input
                 type="date"
                 value={expectedCloseDate}
                 onChange={(e) => setExpectedCloseDate(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Stage</label>
+            <label className="block text-sm font-semibold text-ink mb-1.5">Stage</label>
             <select
               value={stageId}
               onChange={(e) => setStageId(e.target.value)}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               {stages.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -270,13 +270,13 @@ function NewDealModal({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-              Link to lead <span className="font-normal text-slate-400">(optional)</span>
+            <label className="block text-sm font-semibold text-ink mb-1.5">
+              Link to lead <span className="font-normal text-faint">(optional)</span>
             </label>
             <select
               value={leadId}
               onChange={(e) => setLeadId(e.target.value)}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="">No lead</option>
               {leads.map((l) => (
@@ -295,14 +295,14 @@ function NewDealModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors"
+              className="flex-1 px-4 py-2.5 bg-subtle hover:bg-line text-ink rounded-xl text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim() || loading}
-              className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+              className="flex-1 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
             >
               {loading ? 'Creating…' : 'Create Deal'}
             </button>
@@ -451,8 +451,8 @@ export default function PipelinePage() {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Pipeline</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-semibold text-ink">Pipeline</h1>
+          <p className="text-muted text-sm mt-1">
             {totalDeals} open {totalDeals === 1 ? 'deal' : 'deals'} · {formatMoney(totalPipelineValue)} total
           </p>
         </div>
@@ -460,7 +460,7 @@ export default function PipelinePage() {
           {stages.length > 0 && (
             <button
               onClick={() => setShowNewDeal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-brand-200"
+              className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors shadow-sm"
             >
               <IndianRupee className="w-4 h-4" />
               New Deal
@@ -468,7 +468,7 @@ export default function PipelinePage() {
           )}
           <button
             onClick={() => setCreatingPipeline(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-line hover:bg-subtle text-ink rounded-xl text-sm font-semibold transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Pipeline
@@ -486,25 +486,25 @@ export default function PipelinePage() {
       )}
 
       {creatingPipeline && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div className="bg-surface rounded-2xl border border-line p-5 shadow-sm">
           <form onSubmit={handleCreatePipeline} className="flex items-center gap-3">
             <input
               autoFocus
               value={newPipelineName}
               onChange={(e) => setNewPipelineName(e.target.value)}
               placeholder="Pipeline name (e.g. Q2 Healthcare)"
-              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="flex-1 px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <button
               type="submit"
-              className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors"
+              className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors"
             >
               Create
             </button>
             <button
               type="button"
               onClick={() => setCreatingPipeline(false)}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors"
+              className="px-4 py-2.5 bg-subtle hover:bg-line text-ink rounded-xl text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -520,8 +520,8 @@ export default function PipelinePage() {
               onClick={() => setActivePipelineId(p.id)}
               className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                 activePipelineId === p.id
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-brand-600 text-onaccent shadow-sm'
+                  : 'bg-surface border border-line text-muted hover:bg-subtle'
               }`}
             >
               {p.name}
@@ -537,17 +537,17 @@ export default function PipelinePage() {
       )}
 
       {!loading && pipelines.length === 0 && (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <GitBranch className="w-7 h-7 text-slate-400" />
+        <div className="text-center py-20 bg-surface rounded-2xl border border-line">
+          <div className="w-16 h-16 bg-subtle rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <GitBranch className="w-7 h-7 text-faint" />
           </div>
-          <p className="text-slate-700 font-semibold text-lg">No pipelines yet</p>
-          <p className="text-slate-400 text-sm mt-1 mb-6">
+          <p className="text-ink font-semibold text-lg">No pipelines yet</p>
+          <p className="text-faint text-sm mt-1 mb-6">
             Create a pipeline to start tracking deals through stages
           </p>
           <button
             onClick={() => setCreatingPipeline(true)}
-            className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors"
+            className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors"
           >
             Create Pipeline
           </button>
@@ -573,7 +573,7 @@ export default function PipelinePage() {
       )}
 
       {!loading && pipelines.length > 0 && totalDeals === 0 && stages.length > 0 && (
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-faint">
           No open deals yet.{' '}
           <button onClick={() => setShowNewDeal(true)} className="text-brand-600 font-medium hover:underline">
             Create your first deal

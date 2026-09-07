@@ -11,15 +11,12 @@ datasource db {
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
-  passwordHash String?
+  /// Supabase Auth user id (the `sub` claim). Null only for seeded/dev rows.
+  supabaseId   String?   @unique
   name         String?
   avatarUrl    String?
-  googleId     String?   @unique
   isVerified   Boolean   @default(false)
   source       String?
-  refreshToken String?
-  otpCode      String?
-  otpExpiresAt DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -40,7 +37,6 @@ model Organization {
   usedLeadCredits       Int      @default(0)
   usedAiCredits         Int      @default(0)
   usedEmailCredits      Int      @default(0)
-  usedWaCredits         Int      @default(0)
   aiQualificationPrompt String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -101,7 +97,6 @@ model Subscription {
   leadLimit         Int       @default(100)
   aiLimit           Int       @default(50)
   emailLimit        Int       @default(500)
-  waLimit           Int       @default(100)
   seatLimit         Int       @default(2)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt

@@ -1,32 +1,48 @@
-import rateLimit from 'express-rate-limit';
+import { createMiddleware } from 'hono/factory';
+import type { AppBindings, AuthUser } from '../types';
 
-const isProd = process.env.NODE_ENV === 'production';
+/**
+ * Rate limiting via Cloudflare's native binding.
+ *
+ * `express-rate-limit` keeps counters in process memory, which does not exist
+ * on Workers. The platform binding keeps them per-colo instead: eventually
+ * consistent and deliberately approximate, which is the right trade for abuse
+ * blunting. Limits and windows are declared in wrangler.jsonc — the binding
+ * only accepts 10s or 60s periods, so the auth limiter's window is 60s with a
+ * correspondingly low limit rather than the old 15 minutes.
+ */
 
-// Applied to every /api route. Generous — it only exists to blunt abuse/runaway clients.
-export const apiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  limit: isProd ? 200 : 1000,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { error: 'Too many requests, please slow down.' }
-});
+type LimiterName = 'API_RATE_LIMIT' | 'AI_RATE_LIMIT' | 'AUTH_RATE_LIMIT';
 
-// Strict limiter for credential endpoints — the real brute-force surface.
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: isProd ? 10 : 100,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  // Only failed attempts count, so a legitimate user isn't locked out by their own success.
-  skipSuccessfulRequests: true,
-  message: { error: 'Too many attempts. Try again in a few minutes.' }
-});
+const limiter = (binding: LimiterName, message: string) =>
+  createMiddleware<AppBindings>(async (c, next) => {
+    const rl = c.env[binding];
+    // Missing binding must not take the API down — log and let it through.
+    if (!rl) {
+      console.warn(`Rate limit binding ${binding} is not configured`);
+      return next();
+    }
 
-// AI endpoints are expensive (tokens + latency); cap per-minute bursts per client.
-export const aiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  limit: isProd ? 20 : 100,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { error: 'AI request limit reached, please wait a moment.' }
-});
+    // Prefer the authenticated user, else the client IP — so one tenant's burst
+    // cannot exhaust another's budget on a shared NAT. On public routes
+    // (login, register) no user is set yet, hence the IP fallback.
+    // Undefined on public routes (login/register), where this middleware runs
+    // ahead of authenticate.
+    const user = c.get('user') as AuthUser | undefined;
+    const key = user?.userId
+      ? `user:${user.userId}`
+      : `ip:${c.req.header('cf-connecting-ip') || 'unknown'}`;
+
+    const { success } = await rl.limit({ key: `${binding}:${key}` });
+    if (!success) return c.json({ error: message }, 429);
+    await next();
+  });
+
+export const apiLimiter = limiter('API_RATE_LIMIT', 'Too many requests, please slow down.');
+
+export const authLimiter = limiter(
+  'AUTH_RATE_LIMIT',
+  'Too many attempts. Try again in a few minutes.'
+);
+
+export const aiLimiter = limiter('AI_RATE_LIMIT', 'AI request limit reached, please wait a moment.');

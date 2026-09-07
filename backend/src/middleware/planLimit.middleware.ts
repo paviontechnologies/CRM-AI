@@ -1,6 +1,6 @@
-import { Response, NextFunction } from 'express';
+import { createMiddleware } from 'hono/factory';
 import { prisma } from '../lib/prisma';
-import { AuthRequest } from './auth.middleware';
+import type { AppBindings, AppContext } from '../types';
 
 export type LimitKind = 'lead' | 'ai' | 'email' | 'seat';
 
@@ -52,52 +52,58 @@ export const remainingQuota = async (orgId: string, kind: LimitKind): Promise<nu
  * `cost` lets a bulk action (e.g. importing 40 leads) reserve its whole size up front.
  */
 export const enforceLimit = (kind: LimitKind, cost = 1) =>
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
+  createMiddleware<AppBindings>(async (c, next) => {
     try {
-      const orgId = req.user!.orgId;
-      const remaining = await remainingQuota(orgId, kind);
+      const remaining = await remainingQuota(c.get('user').orgId, kind);
 
       if (remaining < cost) {
-        return res.status(402).json({
-          error: `You've reached your plan's ${kind} limit for this cycle. Upgrade to continue.`,
-          code: 'PLAN_LIMIT_REACHED',
-          limitKind: kind,
-          remaining
-        });
+        return c.json(
+          {
+            error: `You've reached your plan's ${kind} limit for this cycle. Upgrade to continue.`,
+            code: 'PLAN_LIMIT_REACHED',
+            limitKind: kind,
+            remaining
+          },
+          402
+        );
       }
-
-      next();
     } catch (error) {
       // Fail open: a limit-check outage must not take the whole app down.
       console.error('Plan limit check failed:', error);
-      next();
     }
-  };
+    await next();
+  });
 
 /**
  * For bulk endpoints where the cost is only known from the request body.
- * `getCost` reads the body and returns how many units the action will consume.
+ * `getCost` reads the parsed body and returns how many units the action consumes.
+ *
+ * The body is parsed here and cached on the context so the handler can read it
+ * again — a Request body can only be consumed once.
  */
-export const enforceDynamicLimit = (kind: LimitKind, getCost: (req: AuthRequest) => number) =>
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const enforceDynamicLimit = (kind: LimitKind, getCost: (body: any) => number) =>
+  createMiddleware<AppBindings>(async (c, next) => {
     try {
-      const orgId = req.user!.orgId;
-      const cost = Math.max(1, getCost(req));
-      const remaining = await remainingQuota(orgId, kind);
+      // Hono caches the parsed body internally, so the handler's own
+      // c.req.json() call returns the same object rather than re-reading.
+      const body = await c.req.json().catch(() => ({}));
+      const cost = Math.max(1, getCost(body));
+      const remaining = await remainingQuota(c.get('user').orgId, kind);
 
       if (remaining < cost) {
-        return res.status(402).json({
-          error: `This would exceed your plan's ${kind} limit (${remaining} left this cycle). Upgrade to continue.`,
-          code: 'PLAN_LIMIT_REACHED',
-          limitKind: kind,
-          remaining,
-          requested: cost
-        });
+        return c.json(
+          {
+            error: `This would exceed your plan's ${kind} limit (${remaining} left this cycle). Upgrade to continue.`,
+            code: 'PLAN_LIMIT_REACHED',
+            limitKind: kind,
+            remaining,
+            requested: cost
+          },
+          402
+        );
       }
-
-      next();
     } catch (error) {
       console.error('Plan limit check failed:', error);
-      next();
     }
-  };
+    await next();
+  });

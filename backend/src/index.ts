@@ -1,10 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
-dotenv.config();
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
+import { secureHeaders } from 'hono/secure-headers';
+import { ZodError } from 'zod';
+
+import { createPrisma } from './lib/prisma';
+import { runWithContext, type WorkerEnv } from './lib/context';
+import { apiLimiter } from './middleware/rateLimit.middleware';
+import { runCampaignTick } from './services/campaign.scheduler';
+import type { AppBindings } from './types';
 
 import authRoutes from './routes/auth.routes';
 import leadsRoutes from './routes/leads.routes';
@@ -20,96 +24,83 @@ import notesRoutes from './routes/notes.routes';
 import attachmentsRoutes from './routes/attachments.routes';
 import notificationsRoutes from './routes/notifications.routes';
 import assistantRoutes from './routes/assistant.routes';
-import { startCampaignScheduler } from './services/campaign.scheduler';
-import { apiLimiter } from './middleware/rateLimit.middleware';
-import { prisma } from './lib/prisma';
+import webhooksRoutes from './routes/webhooks.routes';
 
-const app = express();
-const PORT = process.env.PORT || 5001;
+const app = new Hono<AppBindings>();
 
-// Fail fast on missing critical config rather than dying on the first query.
-if (!process.env.DATABASE_URL) {
-  console.error('FATAL: DATABASE_URL is not set. Copy .env.example to .env and fill it in.');
-  process.exit(1);
-}
-if (!process.env.JWT_SECRET) {
-  console.warn('WARNING: JWT_SECRET is not set — using an insecure dev default. Set it before deploying.');
-}
+app.use('*', logger());
+app.use('*', secureHeaders());
 
-// Behind a proxy/load balancer, trust it so rate-limit keys off the real client IP.
-app.set('trust proxy', 1);
-
-app.use(
+// CORS origin comes from env, so the middleware is built per request.
+app.use('*', (c, next) =>
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: c.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
-  })
+  })(c, next)
 );
-app.use(helmet());
-app.use(morgan('dev'));
-app.use(
-  express.json({
-    limit: '10mb',
-    // Stripe verifies its webhook signature against the exact bytes we received,
-    // so stash the raw buffer before JSON parsing consumes it.
-    verify: (req: any, _res, buf) => {
-      if (req.originalUrl === '/api/billing/webhook') req.rawBody = buf;
-    }
-  })
-);
-app.use(cookieParser());
 
-app.get('/health', (_req, res) =>
-  res.json({ status: 'ok', service: 'ai-leadgen-api', version: '2.0.0' })
+app.get('/health', (c) =>
+  c.json({ status: 'ok', service: 'ai-leadgen-api', version: '3.0.0' })
 );
 
 // Rate-limit everything under /api (health stays unthrottled for probes).
-app.use('/api', apiLimiter);
+app.use('/api/*', apiLimiter);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/leads', leadsRoutes);
-app.use('/api/campaigns', campaignsRoutes);
-app.use('/api/pipeline', pipelineRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/billing', billingRoutes);
-app.use('/api/team', teamRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/deals', dealsRoutes);
-app.use('/api/tasks', tasksRoutes);
-app.use('/api/notes', notesRoutes);
-app.use('/api/attachments', attachmentsRoutes);
-app.use('/api/notifications', notificationsRoutes);
-app.use('/api/assistant', assistantRoutes);
+app.route('/api/auth', authRoutes);
+app.route('/api/leads', leadsRoutes);
+app.route('/api/campaigns', campaignsRoutes);
+app.route('/api/pipeline', pipelineRoutes);
+app.route('/api/analytics', analyticsRoutes);
+app.route('/api/billing', billingRoutes);
+app.route('/api/team', teamRoutes);
+app.route('/api/admin', adminRoutes);
+app.route('/api/deals', dealsRoutes);
+app.route('/api/tasks', tasksRoutes);
+app.route('/api/notes', notesRoutes);
+app.route('/api/attachments', attachmentsRoutes);
+app.route('/api/notifications', notificationsRoutes);
+app.route('/api/assistant', assistantRoutes);
+app.route('/api/webhooks', webhooksRoutes);
 
-app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
+app.notFound((c) => c.json({ error: 'Not found' }, 404));
 
-app.use((err: any, _req: any, res: any, _next: any) => {
-  // Multer surfaces upload problems as errors — report them as client errors.
-  if (err?.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'File is too large' });
-  }
-  if (err?.message === 'This file type is not allowed') {
-    return res.status(400).json({ error: err.message });
+app.onError((err, c) => {
+  if (err instanceof ZodError) {
+    return c.json({ error: err.errors }, 400);
   }
   console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
+  return c.json({ error: 'Internal server error' }, 500);
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  startCampaignScheduler();
-});
-
-// Graceful shutdown — stop accepting connections, then release the DB pool.
-const shutdown = async (signal: string) => {
-  console.log(`\n${signal} received, shutting down…`);
-  server.close(async () => {
-    await prisma.$disconnect().catch(() => undefined);
-    process.exit(0);
-  });
-  // Don't hang forever if a connection refuses to close.
-  setTimeout(() => process.exit(1), 10_000).unref();
+/**
+ * Open a request-scoped context (Prisma client + env + waitUntil) and run the
+ * handler inside it. Everything downstream reads the client through
+ * `lib/context`, so no controller has to take env as a parameter.
+ */
+const withContext = async <T>(
+  env: WorkerEnv,
+  ctx: ExecutionContext,
+  fn: () => T | Promise<T>
+): Promise<T> => {
+  if (!env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set — run `wrangler secret put DATABASE_URL`');
+  }
+  const db = createPrisma(env.DATABASE_URL);
+  return runWithContext(
+    { db, env, waitUntil: (p) => ctx.waitUntil(p) },
+    fn
+  );
 };
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+export default {
+  fetch: (request: Request, env: WorkerEnv, ctx: ExecutionContext) =>
+    withContext(env, ctx, () => app.fetch(request, env, ctx)),
+
+  /**
+   * Cron entry point. Replaces the setInterval the Express build used: Workers
+   * have no process to keep a timer alive, so the platform calls this on the
+   * schedule declared in wrangler.jsonc.
+   */
+  scheduled: (event: ScheduledController, env: WorkerEnv, ctx: ExecutionContext) =>
+    ctx.waitUntil(withContext(env, ctx, () => runCampaignTick()))
+};

@@ -36,7 +36,7 @@ type FilterKey = (typeof FILTERS)[number]['key'];
 const PRIORITY_STYLES: Record<string, string> = {
   high: 'bg-red-100 text-red-700',
   medium: 'bg-amber-100 text-amber-700',
-  low: 'bg-slate-100 text-slate-600',
+  low: 'bg-subtle text-muted',
 };
 
 const isOverdue = (task: Task) =>
@@ -154,8 +154,8 @@ export default function TasksPage() {
     <div className="space-y-5 max-w-4xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tasks</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-semibold text-ink">Tasks</h1>
+          <p className="text-muted text-sm mt-1">
             {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
             {overdueCount > 0 && (
               <span className="text-red-600 font-medium"> · {overdueCount} overdue</span>
@@ -164,7 +164,7 @@ export default function TasksPage() {
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-brand-200"
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           New Task
@@ -181,25 +181,25 @@ export default function TasksPage() {
       )}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <form onSubmit={handleCreate} className="bg-surface rounded-2xl border border-line p-5 shadow-sm space-y-3">
           <input
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What needs to be done?"
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <input
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="low">Low priority</option>
               <option value="medium">Medium priority</option>
@@ -208,7 +208,7 @@ export default function TasksPage() {
             <select
               value={assignedToId}
               onChange={(e) => setAssignedToId(e.target.value)}
-              className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="px-4 py-2.5 border border-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
               <option value="">Assign to me</option>
               {members.map((m) => (
@@ -220,14 +220,14 @@ export default function TasksPage() {
             <button
               type="submit"
               disabled={!title.trim() || saving}
-              className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+              className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-onaccent rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
             >
               {saving ? 'Creating…' : 'Create Task'}
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors"
+              className="px-5 py-2.5 bg-subtle hover:bg-line text-ink rounded-xl text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -242,8 +242,8 @@ export default function TasksPage() {
             onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
               filter === f.key
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-brand-600 text-onaccent shadow-sm'
+                : 'bg-surface border border-line text-muted hover:bg-subtle'
             }`}
           >
             {f.label}
@@ -256,33 +256,33 @@ export default function TasksPage() {
           <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tasks.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
-          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <ListTodo className="w-6 h-6 text-slate-400" />
+        <div className="text-center py-16 bg-surface rounded-2xl border border-line">
+          <div className="w-14 h-14 bg-subtle rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <ListTodo className="w-6 h-6 text-faint" />
           </div>
-          <p className="text-slate-700 font-semibold">Nothing here</p>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-ink font-semibold">Nothing here</p>
+          <p className="text-faint text-sm mt-1">
             {filter === 'completed' ? 'No completed tasks yet.' : 'You are all caught up.'}
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+        <div className="bg-surface rounded-2xl border border-line shadow-sm divide-y divide-line">
           {tasks.map((task) => (
-            <div key={task.id} className="flex items-start gap-3 p-4 group hover:bg-slate-50/70 transition-colors">
+            <div key={task.id} className="flex items-start gap-3 p-4 group hover:bg-subtle/70 transition-colors">
               <button onClick={() => handleToggle(task)} className="flex-shrink-0 mt-0.5">
                 {task.status === 'completed' ? (
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-300 hover:text-brand-500 transition-colors" />
+                  <Circle className="w-5 h-5 text-faint hover:text-brand-500 transition-colors" />
                 )}
               </button>
 
               <div className="min-w-0 flex-1">
-                <p className={`text-sm font-medium ${task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                <p className={`text-sm font-medium ${task.status === 'completed' ? 'line-through text-faint' : 'text-ink'}`}>
                   {task.title}
                 </p>
                 {task.description && (
-                  <p className="text-xs text-slate-500 mt-0.5">{task.description}</p>
+                  <p className="text-xs text-muted mt-0.5">{task.description}</p>
                 )}
 
                 <div className="flex items-center gap-3 mt-1.5 flex-wrap">
@@ -291,7 +291,7 @@ export default function TasksPage() {
                   </span>
 
                   {task.dueDate && (
-                    <span className={`text-xs flex items-center gap-1 ${isOverdue(task) ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
+                    <span className={`text-xs flex items-center gap-1 ${isOverdue(task) ? 'text-red-600 font-medium' : 'text-faint'}`}>
                       {isOverdue(task) ? <AlertTriangle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                       {formatDue(task.dueDate)}
                     </span>
@@ -308,7 +308,7 @@ export default function TasksPage() {
                   )}
 
                   {task.assignedTo && (
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-faint">
                       {task.assignedTo.user.name || task.assignedTo.user.email}
                     </span>
                   )}
@@ -317,7 +317,7 @@ export default function TasksPage() {
 
               <button
                 onClick={() => handleDelete(task.id)}
-                className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                className="text-faint hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
